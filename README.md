@@ -1,59 +1,113 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Roomie
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="public/images/brand/LogoRoomie.svg" alt="Roomie" width="280">
 </p>
 
-## About Laravel
+<p align="center">
+  Campanas de marketing hotelero hiper-personalizadas, disenadas por 4 agentes de IA.
+</p>
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+---
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+**Roomie** es un generador de campanas de marketing hotelero impulsado por IA. El usuario introduce un objetivo de negocio y un pipeline de 4 agentes analiza datos de hoteles y clientes, define estrategia, genera contenido creativo y audita la calidad del resultado.
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+Proyecto desarrollado para el reto de **Eurostars Hotel Company** en el **Impacthon 2026**.
 
-## Learning Laravel
+## Pipeline de 4 agentes
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+| Agente | Funcion |
+|--------|---------|
+| **Analista** | Segmenta clientes y extrae insights de mercado a partir de los datos |
+| **Estratega** | Define publico objetivo, hotel, timing y canal optimo |
+| **Creativo** | Genera copy de email, asunto, CTA y formatos alternativos (push, SMS, social) |
+| **Auditor** | Revisa coherencia entre las fases y asigna un score de calidad (0-100) |
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Cada agente llama a la API de Claude (Anthropic) de forma secuencial, pasando su output como contexto al siguiente.
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+## Tech stack
 
-## Agentic Development
+- **Backend:** PHP 8.4 / Laravel 13
+- **Frontend:** Blade + Tailwind CSS v4 + Vite
+- **IA:** API de Anthropic (Claude Sonnet 4)
+- **Base de datos:** SQLite (por defecto)
+- **Cola:** Database driver (para el pipeline asincrono)
+- **Testing:** Pest v4
 
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Instalacion
 
 ```bash
-composer require laravel/boost --dev
+git clone <repo-url> roomie
+cd roomie
 
-php artisan boost:install
+composer install
+cp .env.example .env
+php artisan key:generate
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+Configura tu clave de Anthropic en `.env`:
 
-## Contributing
+```
+ANTHROPIC_API_KEY=sk-ant-...
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Prepara la base de datos y carga los datos de ejemplo:
 
-## Code of Conduct
+```bash
+php artisan migrate
+php artisan db:seed
+```
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+Compila los assets del frontend:
 
-## Security Vulnerabilities
+```bash
+npm install
+npm run build
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+## Desarrollo
 
-## License
+```bash
+composer run dev
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# roomie
+Esto arranca concurrentemente el servidor de Laravel, el worker de colas, los logs y Vite.
+
+## Testing
+
+```bash
+composer test
+```
+
+## Estructura clave
+
+```
+app/
+  Http/Controllers/CampaignController.php   # CRUD de campanas
+  Jobs/RunCampaignPipeline.php               # Job asincrono del pipeline
+  Models/{Hotel,Customer,Campaign}.php       # Modelos Eloquent
+  Services/Campaign/CampaignPipeline.php     # Logica de los 4 agentes
+database/
+  seeders/                                   # Carga hotel_data.csv y customer_data_200.csv
+docs/
+  hotel_data.csv                             # Dataset de hoteles
+  customer_data_200.csv                      # Dataset de clientes (200 registros)
+resources/views/
+  welcome.blade.php                          # Landing page
+  campaigns/{index,create,show}.blade.php    # Vistas de campanas
+```
+
+## Rutas
+
+| Metodo | URI | Descripcion |
+|--------|-----|-------------|
+| GET | `/` | Landing page |
+| GET | `/campaigns` | Listado de campanas |
+| GET | `/campaigns/create` | Formulario de nueva campana |
+| POST | `/campaigns` | Lanza el pipeline |
+| GET | `/campaigns/{id}` | Detalle de campana |
+| GET | `/campaigns/{id}/status` | Estado JSON (polling) |
+
+## Licencia
+
+Proyecto academico — Impacthon 2026.
