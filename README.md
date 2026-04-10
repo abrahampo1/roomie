@@ -1,59 +1,78 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Roomie - Make Me Want to Travel
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Plataforma de generación de campañas de marketing hotelero impulsada por IA. Utiliza un pipeline de 4 agentes inteligentes (Claude) para crear campañas de marketing hiperpersonalizadas para cadenas hoteleras.
 
-## About Laravel
+Desarrollado para **Impacthon 2026** — reto de Eurostars Hotel Company.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Arquitectura del Pipeline
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+El sistema orquesta 4 agentes de IA en secuencia:
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+1. **Analyst** — Segmenta clientes según datos del hotel y comportamiento, identifica factores estacionales y recomienda segmentos objetivo.
+2. **Strategist** — Diseña la estrategia de campaña: segmentos, hoteles recomendados, timing, canal de comunicación, tono y mensajes clave.
+3. **Creative** — Genera los activos creativos: asunto de email, cuerpo HTML con estilos inline, CTAs, y formatos alternativos (push, SMS, redes sociales).
+4. **Auditor** — Revisa la coherencia de la campaña, asigna puntuación de calidad (1-100) y emite veredicto de aprobación.
 
-## Learning Laravel
+## Tech Stack
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+- **Backend:** Laravel 13 · PHP 8.4
+- **Frontend:** Blade · Tailwind CSS 4 · Vite 8
+- **IA:** Anthropic Claude API (claude-sonnet-4-20250514)
+- **Base de datos:** SQLite (configurable)
+- **Testing:** Pest 4
+- **Cola:** Database driver (procesamiento asíncrono de campañas)
 
-In addition, [Laracasts](https://laracasts.com) contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+## Requisitos
 
-You can also watch bite-sized lessons with real-world projects on [Laravel Learn](https://laravel.com/learn), where you will be guided through building a Laravel application from scratch while learning PHP fundamentals.
+- PHP >= 8.3
+- Composer
+- Node.js y npm
+- Una API key de [Anthropic](https://console.anthropic.com/)
 
-## Agentic Development
-
-Laravel's predictable structure and conventions make it ideal for AI coding agents like Claude Code, Cursor, and GitHub Copilot. Install [Laravel Boost](https://laravel.com/docs/ai) to supercharge your AI workflow:
+## Instalación
 
 ```bash
-composer require laravel/boost --dev
+# Clonar el repositorio
+git clone https://github.com/abrahampo1/roomie.git
+cd roomie
 
-php artisan boost:install
+# Setup completo (dependencias, migraciones, build)
+composer setup
+
+# Configurar la API key de Anthropic en el archivo .env
+# ANTHROPIC_API_KEY=tu_api_key
 ```
 
-Boost provides your agent 15+ tools and skills that help agents build Laravel applications while following best practices.
+## Uso
 
-## Contributing
+```bash
+# Iniciar el servidor de desarrollo (servidor, cola, logs y Vite)
+composer dev
+```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Esto ejecuta concurrentemente:
+- `php artisan serve` — Servidor web
+- `php artisan queue:listen` — Procesador de cola para campañas
+- `php artisan pail` — Streaming de logs
+- `npm run dev` — Vite con HMR
 
-## Code of Conduct
+## Tests
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+```bash
+composer test
+```
 
-## Security Vulnerabilities
+## Estructura de Datos
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Hotels
+Datos de hoteles incluyendo ubicación, categoría (estrellas), marca y metadatos de la ciudad (clima, temperatura, playa, montaña, gastronomía, etc.).
 
-## License
+### Customers
+Perfiles de clientes con historial de reservas, métricas de comportamiento (estancias en últimos 2 años, ADR, duración promedio, lead time de reserva) y puntuación promedio.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
-# roomie
+### Campaigns
+Campañas generadas con su objetivo de negocio, estado del pipeline (`pending` / `processing` / `completed` / `failed`), resultados de cada agente (analysis, strategy, creative, audit) y puntuación de calidad.
+
+## Licencia
+
+MIT
