@@ -12,9 +12,7 @@
 
     @if ($campaigns->isEmpty())
         <div class="text-center py-20 bg-white rounded-2xl border border-sand">
-            <svg class="w-12 h-12 text-navy/20 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-            </svg>
+            <img src="{{ asset('images/brand/LogoRoomie_Estrella.svg') }}" alt="Roomie" class="w-12 h-12 opacity-20 mx-auto mb-4">
             <p class="text-navy/40 mb-4">Aún no hay campañas generadas</p>
             <a href="{{ route('campaigns.create') }}" class="text-sm font-medium text-navy underline underline-offset-4">Crear la primera</a>
         </div>
