@@ -20,7 +20,7 @@
 
         <div class="relative max-w-3xl">
             <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-navy/45 mb-6 sm:mb-7">
-                Roomie · Eurostars Hotel Company · Impacthon 2026
+                Roomie · Eurostars Hotel Company · <a href="https://impacthon-web.vercel.app" target="_blank" rel="noopener" class="hover:text-navy underline underline-offset-4 decoration-navy/20 hover:decoration-navy transition">Impacthon 2026</a>
             </p>
 
             <h1 class="font-[Fredoka] font-semibold text-[2.5rem] sm:text-6xl md:text-[4.5rem] leading-[0.96] tracking-tight mb-7">

@@ -12,7 +12,7 @@
 
 **Roomie** es un generador de campanas de marketing hotelero impulsado por IA. El usuario introduce un objetivo de negocio y un pipeline de 4 agentes analiza datos de hoteles y clientes, define estrategia, genera contenido creativo y audita la calidad del resultado.
 
-Proyecto desarrollado para el reto de **Eurostars Hotel Company** en el **Impacthon 2026**.
+Proyecto desarrollado para el reto de **Eurostars Hotel Company** en el **[Impacthon 2026](https://impacthon-web.vercel.app)**.
 
 ## Pipeline de 4 agentes
 
