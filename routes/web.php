@@ -11,21 +11,25 @@ Route::get('/', function () {
     return view('welcome');
 })->name('home');
 
-// Email tracking — PUBLIC routes hit from mail clients. Pixel is token-only
-// (Gmail proxy strips signed query strings). Click and unsubscribe are signed.
+// Email tracking — PUBLIC routes hit from mail clients. Security comes from
+// the per-recipient 40-char `tracking_token` (240 bits of entropy). We
+// deliberately don't use Laravel's `signed` middleware because HTML entity
+// encoding of `&` in href attributes corrupts the `&signature=` query param
+// when the URL is copy-pasted from a log or rendered by a permissive mail
+// client, leading to "Invalid signature" errors. Instead, every tracked URL
+// carries the token as a path segment and the click target base64-encoded
+// as another path segment, so no query string = no `&amp;` bug.
 Route::get('/t/o/{recipient}/{token}', [TrackingController::class, 'open'])
     ->name('tracking.open');
 
-Route::get('/t/c/{recipient}/{token}', [TrackingController::class, 'click'])
-    ->middleware('signed')
+Route::get('/t/c/{recipient}/{token}/{target}', [TrackingController::class, 'click'])
+    ->where('target', '[A-Za-z0-9\-_]+')
     ->name('tracking.click');
 
 Route::get('/t/u/{recipient}/{token}', [TrackingController::class, 'unsubscribe'])
-    ->middleware('signed')
     ->name('tracking.unsubscribe');
 
 Route::post('/t/u/{recipient}/{token}', [TrackingController::class, 'unsubscribeConfirm'])
-    ->middleware('signed')
     ->name('tracking.unsubscribe.confirm');
 
 Route::middleware('guest')->group(function () {

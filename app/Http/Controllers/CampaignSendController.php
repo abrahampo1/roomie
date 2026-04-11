@@ -56,14 +56,22 @@ class CampaignSendController extends Controller
         abort_unless($campaign->isComplete(), 422, 'La campaña todavía no está completada.');
 
         $validated = $request->validate([
-            'recipient_count' => ['nullable', 'integer', 'min:1', 'max:500'],
+            'recipient_mode' => ['required', 'string', 'in:50,100,200,custom,all'],
+            'recipient_count_custom' => ['nullable', 'integer', 'min:1', 'max:100000'],
             'enable_followups' => ['nullable', 'boolean'],
-            'followup_api_key' => ['required_if:enable_followups,1', 'nullable', 'string', 'min:8', 'max:200'],
+            'followup_api_key' => ['nullable', 'string', 'min:8', 'max:200'],
             'followup_max_attempts' => ['nullable', 'integer', 'min:2', 'max:5'],
             'followup_cooldown_hours' => ['nullable', 'integer', 'min:1', 'max:168'],
         ]);
 
-        $limit = $validated['recipient_count'] ?? 50;
+        $limit = match ($validated['recipient_mode']) {
+            '50' => 50,
+            '100' => 100,
+            '200' => 200,
+            'custom' => (int) ($validated['recipient_count_custom'] ?? 50),
+            'all' => null,
+        };
+
         $customers = $this->selector->pickForCampaign($campaign, $limit);
 
         if ($customers->isEmpty()) {
@@ -73,15 +81,30 @@ class CampaignSendController extends Controller
         }
 
         if ($request->boolean('enable_followups')) {
+            $hasStoredKey = $campaign->getRawOriginal('api_key') !== null;
+            $newKey = $validated['followup_api_key'] ?? null;
+
+            if (! $hasStoredKey && ! $newKey) {
+                return redirect()
+                    ->back()
+                    ->withErrors(['followup_api_key' => 'La clave de la campaña ya no está guardada. Pégala de nuevo para activar los follow-ups.'])
+                    ->withInput();
+            }
+
             $maxDays = (int) config('services.roomie.followup_max_retention_days', 14);
-            $campaign->update([
-                'api_key' => $validated['followup_api_key'],
+            $updates = [
                 'api_key_retained_for_followups' => true,
                 'api_key_retention_expires_at' => now()->addDays($maxDays),
                 'followups_enabled' => true,
                 'followup_max_attempts' => $validated['followup_max_attempts'] ?? 3,
                 'followup_cooldown_hours' => $validated['followup_cooldown_hours'] ?? 48,
-            ]);
+            ];
+
+            if ($newKey !== null) {
+                $updates['api_key'] = $newKey;
+            }
+
+            $campaign->update($updates);
         }
 
         $created = $this->sender->dispatchInitialSend($campaign, $customers);

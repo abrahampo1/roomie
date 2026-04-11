@@ -4,15 +4,13 @@ namespace App\Services\Email;
 
 use App\Models\CampaignRecipient;
 use App\Models\EmailUnsubscribe;
-use Illuminate\Support\Facades\URL;
 
 class EmailTrackingService
 {
     /**
-     * Open-pixel URL. Deliberately NOT signed because Gmail/Apple Mail
-     * Privacy Protection fetch images via proxies that strip query strings,
-     * which would false-negative the signature on every open. We rely on the
-     * per-recipient `tracking_token` for tamper protection instead.
+     * Open-pixel URL. Token-only (no `signed` middleware): Gmail and Apple
+     * Mail Privacy Protection pre-fetch images via proxies that strip query
+     * strings, so signed URLs false-negative on every open.
      */
     public function openPixelUrl(CampaignRecipient $recipient): string
     {
@@ -23,29 +21,52 @@ class EmailTrackingService
     }
 
     /**
-     * Click redirect URL. Signed because real humans click it directly and
-     * we want to 403 any tampered click. The original target is base64-encoded
-     * so UTM parameters and other query strings survive byte-for-byte.
+     * Click redirect URL. The target URL is base64url-encoded as a path
+     * segment (not a query param) so HTML entity encoding of `&` doesn't
+     * corrupt the URL when copy-pasted from a log or rendered by a permissive
+     * mail client. Security comes from the per-recipient 40-char
+     * `tracking_token` — 240 bits of entropy, effectively unguessable.
      */
     public function clickUrl(CampaignRecipient $recipient, string $target): string
     {
-        return URL::signedRoute('tracking.click', [
+        return route('tracking.click', [
             'recipient' => $recipient->id,
             'token' => $recipient->tracking_token,
-            'u' => rtrim(strtr(base64_encode($target), '+/', '-_'), '='),
+            'target' => $this->encodeTarget($target),
         ]);
     }
 
     /**
-     * Unsubscribe URL. Signed and used both in the visible email footer and
-     * in the `List-Unsubscribe` header for one-click support.
+     * Unsubscribe URL. Token-only for the same reason as the click URL.
      */
     public function unsubscribeUrl(CampaignRecipient $recipient): string
     {
-        return URL::signedRoute('tracking.unsubscribe', [
+        return route('tracking.unsubscribe', [
             'recipient' => $recipient->id,
             'token' => $recipient->tracking_token,
         ]);
+    }
+
+    public function encodeTarget(string $target): string
+    {
+        return rtrim(strtr(base64_encode($target), '+/', '-_'), '=');
+    }
+
+    public function decodeTarget(string $encoded): ?string
+    {
+        if ($encoded === '') {
+            return null;
+        }
+
+        $padded = strtr($encoded, '-_', '+/');
+        $padded .= str_repeat('=', (4 - strlen($padded) % 4) % 4);
+        $decoded = base64_decode($padded, true);
+
+        if ($decoded === false || ! preg_match('#^https?://#i', $decoded)) {
+            return null;
+        }
+
+        return $decoded;
     }
 
     /**

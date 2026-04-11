@@ -5,10 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\CampaignRecipient;
 use App\Services\Email\EmailTrackingService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 
 class TrackingController extends Controller
@@ -46,22 +44,21 @@ class TrackingController extends Controller
     }
 
     /**
-     * Click redirect handler. Uses the `signed` middleware so tampered URLs
-     * 403 automatically; the token is an extra belt-and-braces check.
-     * Decodes the base64 target, records the click, and 302s the user.
+     * Click redirect handler. Token-only (not signed) because query-string
+     * signatures break when the `&` in the href gets HTML-entity-encoded.
+     * The click target is a path segment with base64url encoding.
      */
-    public function click(Request $request, CampaignRecipient $recipient, string $token): RedirectResponse
+    public function click(CampaignRecipient $recipient, string $token, string $target): RedirectResponse
     {
         abort_unless(hash_equals($recipient->tracking_token, $token), 403);
 
-        $encoded = (string) $request->query('u', '');
-        $target = $this->decodeTarget($encoded) ?? url('/');
+        $decoded = $this->tracking->decodeTarget($target) ?? url('/');
 
         if (! $recipient->isUnsubscribed()) {
             $this->tracking->recordClick($recipient);
         }
 
-        return redirect()->away($target);
+        return redirect()->away($decoded);
     }
 
     /**
@@ -74,7 +71,7 @@ class TrackingController extends Controller
 
         return response()->view('tracking.unsubscribe', [
             'recipient' => $recipient,
-            'confirmUrl' => URL::signedRoute('tracking.unsubscribe.confirm', [
+            'confirmUrl' => route('tracking.unsubscribe.confirm', [
                 'recipient' => $recipient->id,
                 'token' => $token,
             ]),
@@ -85,7 +82,9 @@ class TrackingController extends Controller
 
     /**
      * Unsubscribe POST. Marks the recipient and inserts the global opt-out.
-     * Supports RFC 8058 one-click (Gmail/Apple Mail) via the same route.
+     * Supports RFC 8058 one-click (Gmail / Apple Mail) via the same route —
+     * the CSRF exclusion for `t/u/*` in bootstrap/app.php lets the mail
+     * provider POST without a CSRF token.
      */
     public function unsubscribeConfirm(CampaignRecipient $recipient, string $token): View|Response
     {
@@ -101,26 +100,5 @@ class TrackingController extends Controller
             'alreadyUnsubscribed' => true,
             'confirmed' => true,
         ]);
-    }
-
-    private function decodeTarget(string $encoded): ?string
-    {
-        if ($encoded === '') {
-            return null;
-        }
-
-        $padded = strtr($encoded, '-_', '+/');
-        $padded .= str_repeat('=', (4 - strlen($padded) % 4) % 4);
-        $decoded = base64_decode($padded, true);
-
-        if ($decoded === false) {
-            return null;
-        }
-
-        if (! preg_match('#^https?://#i', $decoded)) {
-            return null;
-        }
-
-        return $decoded;
     }
 }

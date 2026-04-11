@@ -41,9 +41,12 @@ class RunCampaignPipeline implements ShouldQueue
             }
 
             throw $e;
-        } finally {
-            // BYOK: never persist the user's API key beyond the run.
-            $this->campaign->update(['api_key' => null]);
         }
+
+        // The key is intentionally NOT wiped here. It stays encrypted on the
+        // campaign row so the user doesn't have to re-paste it when they send
+        // the campaign or enable follow-ups. Retention is bounded by
+        // `api_key_retention_expires_at` (set at campaign creation) and by the
+        // `WipeExpiredCampaignKeysCommand` that runs hourly.
     }
 }

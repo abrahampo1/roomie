@@ -44,6 +44,8 @@ class CampaignController extends Controller
             'api_model' => ['nullable', 'required_if:provider,custom', 'string', 'max:100'],
         ]);
 
+        $retentionDays = (int) config('services.roomie.followup_max_retention_days', 14);
+
         $campaign = Campaign::create([
             'user_id' => auth()->id(),
             'name' => $validated['name'] ?? null,
@@ -54,6 +56,8 @@ class CampaignController extends Controller
             'api_key' => $validated['api_key'],
             'api_base_url' => $validated['provider'] === 'custom' ? $validated['api_base_url'] : null,
             'api_model' => $validated['provider'] === 'custom' ? $validated['api_model'] : null,
+            'api_key_retained_for_followups' => true,
+            'api_key_retention_expires_at' => now()->addDays($retentionDays),
             'status' => 'pending',
         ]);
 
@@ -76,6 +80,8 @@ class CampaignController extends Controller
                 ->paginate(25);
         }
 
-        return view('campaigns.show', compact('campaign', 'stats', 'recipients'));
+        $maxRecipients = Customer::query()->whereNotNull('email')->count();
+
+        return view('campaigns.show', compact('campaign', 'stats', 'recipients', 'maxRecipients'));
     }
 }

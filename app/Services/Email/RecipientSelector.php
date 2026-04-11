@@ -25,9 +25,10 @@ use Illuminate\Support\Collection;
 class RecipientSelector
 {
     /**
+     * @param  int|null  $limit  Null means "no cap, pick every matching customer".
      * @return Collection<int, Customer>  Ranked customers, distinct by email.
      */
-    public function pickForCampaign(Campaign $campaign, int $limit = 50): Collection
+    public function pickForCampaign(Campaign $campaign, ?int $limit = 50): Collection
     {
         $strategy = $campaign->strategy ?? [];
         $analysis = $campaign->analysis ?? [];
@@ -68,12 +69,16 @@ class RecipientSelector
                 ->all();
         }
 
-        $candidates = Customer::query()
+        $candidatesQuery = Customer::query()
             ->whereNotNull('email')
             ->orderByDesc('avg_score')
-            ->orderByDesc('confirmed_reservations')
-            ->limit(max($limit * 6, 200))
-            ->get();
+            ->orderByDesc('confirmed_reservations');
+
+        if ($limit !== null) {
+            $candidatesQuery->limit(max($limit * 6, 200));
+        }
+
+        $candidates = $candidatesQuery->get();
 
         $scored = $candidates->map(function (Customer $c) use (
             $recommendedHotelExternalId,
@@ -113,7 +118,7 @@ class RecipientSelector
             }
             $seenEmails[$email] = true;
             $picked->push($customer);
-            if ($picked->count() >= $limit) {
+            if ($limit !== null && $picked->count() >= $limit) {
                 break;
             }
         }
