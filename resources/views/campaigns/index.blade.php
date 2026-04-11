@@ -1,7 +1,7 @@
 <x-layouts.app title="Campañas">
-    <header class="flex items-end justify-between pb-8 mb-10 border-b border-navy/15 gap-6 flex-wrap">
+    <header class="flex items-end justify-between pb-7 sm:pb-8 mb-9 sm:mb-10 border-b border-navy/15 gap-4 flex-wrap">
         <div>
-            <h1 class="font-[Fredoka] font-semibold text-4xl tracking-tight">Campañas</h1>
+            <h1 class="font-[Fredoka] font-semibold text-3xl sm:text-4xl tracking-tight">Campañas</h1>
             <p class="text-sm text-navy/55 mt-2">
                 {{ $campaigns->count() }} {{ $campaigns->count() === 1 ? 'campaña generada' : 'campañas generadas' }} hasta hoy.
             </p>
@@ -14,10 +14,10 @@
     </header>
 
     @if ($campaigns->isEmpty())
-        <div class="py-24 text-center">
+        <div class="py-20 sm:py-24 text-center">
             <svg class="w-7 h-7 text-navy/15 mx-auto mb-5" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
             <p class="text-navy/55">Todavía no hay campañas en el archivo.</p>
-            <a href="{{ route('campaigns.create') }}" class="inline-block mt-4 text-sm underline underline-offset-4 decoration-navy/20 hover:decoration-navy transition">
+            <a href="{{ route('campaigns.create') }}" class="inline-block mt-4 text-sm underline underline-offset-4 decoration-navy/20 hover:decoration-navy transition py-2 -my-2">
                 Crear la primera
             </a>
         </div>
@@ -34,33 +34,29 @@
             @foreach ($campaigns as $campaign)
                 <li>
                     <a href="{{ route('campaigns.show', $campaign) }}"
-                       class="grid grid-cols-12 gap-4 py-5 group hover:bg-navy/[0.025] transition -mx-3 px-3 rounded-lg">
-                        <span class="col-span-2 md:col-span-1 font-mono text-xs text-navy/35 pt-1.5">
-                            #{{ str_pad($campaign->id, 3, '0', STR_PAD_LEFT) }}
-                        </span>
-                        <div class="col-span-10 md:col-span-7 min-w-0">
-                            <p class="font-[Fredoka] font-semibold text-base truncate group-hover:text-copper-dark transition">
-                                {{ $campaign->strategy['campaign_name'] ?? $campaign->objective }}
-                            </p>
-                            <p class="text-sm text-navy/50 truncate mt-0.5">{{ $campaign->objective }}</p>
-                        </div>
-                        <div class="col-span-6 md:col-span-2 text-left md:text-right pt-1">
-                            @if ($campaign->quality_score)
-                                <p class="font-[Fredoka] font-semibold text-base
-                                    {{ $campaign->quality_score >= 80 ? 'text-emerald-700' : ($campaign->quality_score >= 60 ? 'text-amber-700' : 'text-red-700') }}">
-                                    {{ $campaign->quality_score }}<span class="text-navy/30 font-normal text-xs">/100</span>
-                                </p>
-                            @endif
-                        </div>
-                        <div class="col-span-6 md:col-span-2 text-right pt-2 text-xs">
-                            <span
-                                class="{{ $campaign->status === 'completed' ? 'text-emerald-700' : '' }}
+                       class="block py-5 group hover:bg-navy/[0.025] active:bg-navy/[0.04] transition -mx-3 px-3 rounded-lg">
+                        <div class="flex items-center gap-3 mb-1.5">
+                            <span class="font-mono text-[11px] text-navy/35">
+                                #{{ str_pad($campaign->id, 3, '0', STR_PAD_LEFT) }}
+                            </span>
+                            <span class="text-[11px] ml-auto
+                                {{ $campaign->status === 'completed' ? 'text-emerald-700' : '' }}
                                 {{ $campaign->status === 'processing' ? 'text-amber-700' : '' }}
                                 {{ $campaign->status === 'pending' ? 'text-navy/55' : '' }}
                                 {{ $campaign->status === 'failed' ? 'text-red-700' : '' }}">
                                 {{ $statusLabels[$campaign->status] ?? $campaign->status }}
                             </span>
+                            @if ($campaign->quality_score)
+                                <span class="font-[Fredoka] font-semibold text-sm shrink-0
+                                    {{ $campaign->quality_score >= 80 ? 'text-emerald-700' : ($campaign->quality_score >= 60 ? 'text-amber-700' : 'text-red-700') }}">
+                                    {{ $campaign->quality_score }}<span class="text-navy/30 font-normal text-[11px]">/100</span>
+                                </span>
+                            @endif
                         </div>
+                        <p class="font-[Fredoka] font-semibold text-base sm:text-[17px] leading-snug group-hover:text-copper-dark transition line-clamp-2 sm:truncate">
+                            {{ $campaign->strategy['campaign_name'] ?? $campaign->objective }}
+                        </p>
+                        <p class="text-sm text-navy/50 mt-1 line-clamp-2 sm:truncate">{{ $campaign->objective }}</p>
                     </a>
                 </li>
             @endforeach

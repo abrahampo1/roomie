@@ -2,7 +2,8 @@
 <html lang="es" class="h-full">
 <head>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="theme-color" content="#faf8f5">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>{{ $title ?? 'Roomie' }} — Roomie</title>
@@ -23,26 +24,26 @@
         </defs>
     </svg>
 
-    <nav class="border-b border-navy/15">
-        <div class="mx-auto max-w-5xl px-6 py-5 flex items-center justify-between">
-            <a href="{{ route('home') }}" class="flex items-center gap-2.5 group">
+    <nav class="sticky top-0 z-40 border-b border-navy/15 bg-cream/85 backdrop-blur-md">
+        <div class="mx-auto max-w-5xl px-5 sm:px-6 py-3 sm:py-5 flex items-center justify-between">
+            <a href="{{ route('home') }}" class="flex items-center gap-2.5 group -my-2 py-2">
                 <svg class="w-[18px] h-[18px] text-copper transition-transform group-hover:rotate-90 duration-500" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
                 <span class="font-[Fredoka] font-semibold text-xl tracking-tight">Roomie</span>
             </a>
-            <div class="flex items-center gap-7 text-sm">
-                <a href="{{ route('campaigns.index') }}" class="text-navy/55 hover:text-navy transition">
+            <div class="flex items-center gap-3 sm:gap-7 text-sm">
+                <a href="{{ route('campaigns.index') }}" class="text-navy/55 hover:text-navy transition -my-2 py-2 px-1">
                     Campañas
                 </a>
-                <a href="{{ route('campaigns.create') }}" class="bg-navy text-cream px-4 py-2 rounded-full hover:bg-navy-light transition">
+                <a href="{{ route('campaigns.create') }}" class="bg-navy text-cream px-4 py-2.5 rounded-full hover:bg-navy-light transition">
                     Nueva
                 </a>
             </div>
         </div>
     </nav>
 
-    <main class="mx-auto max-w-5xl px-6 py-14">
+    <main class="mx-auto max-w-5xl px-5 sm:px-6 py-10 sm:py-14">
         @if (session('message'))
-            <div class="mb-10 border-l-2 border-copper pl-4 py-1 text-sm text-navy/70">
+            <div class="mb-8 sm:mb-10 border-l-2 border-copper pl-4 py-1 text-sm text-navy/70">
                 {{ session('message') }}
             </div>
         @endif
@@ -50,8 +51,8 @@
         {{ $slot }}
     </main>
 
-    <footer class="border-t border-navy/15 mt-28">
-        <div class="mx-auto max-w-5xl px-6 py-10 flex flex-wrap items-baseline justify-between gap-4">
+    <footer class="border-t border-navy/15 mt-20 sm:mt-28" style="padding-bottom: env(safe-area-inset-bottom);">
+        <div class="mx-auto max-w-5xl px-5 sm:px-6 py-9 sm:py-10 flex flex-col sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between gap-3 sm:gap-4">
             <div>
                 <p class="font-[Fredoka] font-semibold text-base">Roomie</p>
                 <p class="text-xs text-navy/45 mt-1">Reto Eurostars Hotel Company · Impacthon 2026</p>

@@ -14,26 +14,26 @@
         }
     @endphp
 
-    <a href="{{ route('campaigns.index') }}" class="text-xs text-navy/45 hover:text-navy transition">
+    <a href="{{ route('campaigns.index') }}" class="text-xs text-navy/45 hover:text-navy transition py-2 -my-2 inline-block">
         ← Campañas
     </a>
 
-    <header class="pt-4 pb-9 mb-12 border-b border-navy/15">
-        <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-3">
-            #{{ str_pad($campaign->id, 3, '0', STR_PAD_LEFT) }}
+    <header class="pt-3 sm:pt-4 pb-8 sm:pb-9 mb-10 sm:mb-12 border-b border-navy/15">
+        <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-3 flex flex-wrap gap-x-2 gap-y-1">
+            <span>#{{ str_pad($campaign->id, 3, '0', STR_PAD_LEFT) }}</span>
             @if ($campaign->created_at)
-                · {{ $campaign->created_at->translatedFormat('d M Y') }}
+                <span>· {{ $campaign->created_at->translatedFormat('d M Y') }}</span>
             @endif
             @if ($providerLabel)
-                · {{ $providerLabel }}
+                <span>· {{ $providerLabel }}</span>
             @endif
         </p>
-        <h1 class="font-[Fredoka] font-semibold text-4xl md:text-5xl leading-[1.05] tracking-tight mb-4 max-w-3xl">
+        <h1 class="font-[Fredoka] font-semibold text-3xl sm:text-4xl md:text-5xl leading-[1.05] tracking-tight mb-3 sm:mb-4 max-w-3xl">
             {{ $campaign->strategy['campaign_name'] ?? 'Sin título' }}
         </h1>
-        <p class="text-navy/60 leading-relaxed max-w-2xl">{{ $campaign->objective }}</p>
+        <p class="text-navy/60 leading-relaxed max-w-2xl text-[15px] sm:text-base">{{ $campaign->objective }}</p>
 
-        <div class="flex items-center gap-7 mt-7">
+        <div class="flex items-center gap-5 sm:gap-7 mt-6 sm:mt-7 flex-wrap">
             @if ($campaign->quality_score)
                 <div class="flex items-baseline gap-2">
                     <span class="font-[Fredoka] font-semibold text-2xl
@@ -96,9 +96,9 @@
     @endif
 
     @if ($campaign->isComplete())
-        <div class="grid grid-cols-12 gap-x-10 gap-y-12">
+        <div class="grid grid-cols-12 gap-x-8 lg:gap-x-10 gap-y-10 sm:gap-y-12">
             {{-- Sidebar: estrategia + auditoría --}}
-            <aside class="col-span-12 lg:col-span-4 space-y-12">
+            <aside class="col-span-12 lg:col-span-4 space-y-10 sm:space-y-12">
                 @if ($strategy = $campaign->strategy)
                     <section>
                         <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-5">Estrategia</p>
@@ -184,22 +184,22 @@
                     <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-5">Email</p>
 
                     <div class="bg-white border border-navy/15 rounded-2xl overflow-hidden">
-                        <div class="px-7 py-5 border-b border-navy/10">
+                        <div class="px-5 sm:px-7 py-4 sm:py-5 border-b border-navy/10">
                             <p class="text-xs text-navy/45 mb-1">Asunto</p>
-                            <p class="font-[Fredoka] font-semibold text-lg leading-tight">{{ $creative['subject_line'] ?? '' }}</p>
+                            <p class="font-[Fredoka] font-semibold text-base sm:text-lg leading-tight">{{ $creative['subject_line'] ?? '' }}</p>
                             <p class="text-sm text-navy/55 mt-2">{{ $creative['preview_text'] ?? '' }}</p>
                         </div>
 
-                        <div class="bg-navy text-cream px-8 py-8">
+                        <div class="bg-navy text-cream px-5 sm:px-8 py-7 sm:py-8">
                             <p class="text-[11px] tracking-[0.18em] uppercase text-copper mb-3">{{ $strategy['recommended_hotel']['name'] ?? 'Eurostars' }}</p>
-                            <h2 class="font-[Fredoka] font-semibold text-2xl md:text-3xl leading-tight">{{ $creative['headline'] ?? '' }}</h2>
+                            <h2 class="font-[Fredoka] font-semibold text-xl sm:text-2xl md:text-3xl leading-tight">{{ $creative['headline'] ?? '' }}</h2>
                         </div>
 
-                        <div class="px-8 py-7 text-sm leading-relaxed text-navy/80">
+                        <div class="px-5 sm:px-8 py-6 sm:py-7 text-sm leading-relaxed text-navy/80 break-words">
                             {!! $creative['body_html'] ?? '' !!}
                         </div>
 
-                        <div class="px-8 pb-8 text-center">
+                        <div class="px-5 sm:px-8 pb-7 sm:pb-8 text-center">
                             <span class="inline-block bg-copper text-navy px-7 py-2.5 rounded-full text-sm font-medium">
                                 {{ $creative['cta_text'] ?? 'Reservar ahora' }}
                             </span>
@@ -236,7 +236,7 @@
                 <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-7">Análisis</p>
 
                 @if (!empty($analysis['segments']))
-                    <div class="grid md:grid-cols-2 gap-x-10 gap-y-9 mb-12">
+                    <div class="grid md:grid-cols-2 gap-x-8 lg:gap-x-10 gap-y-8 sm:gap-y-9 mb-10 sm:mb-12">
                         @foreach ($analysis['segments'] as $segment)
                             @php $isFocus = ($segment['name'] ?? '') === ($analysis['recommended_focus_segment'] ?? ''); @endphp
                             <div>
@@ -247,12 +247,12 @@
                                     @endif
                                 </div>
                                 <p class="text-sm text-navy/60 leading-relaxed mb-4">{{ $segment['description'] ?? '' }}</p>
-                                <dl class="flex gap-7 text-xs">
-                                    <div>
+                                <dl class="grid grid-cols-3 gap-3 text-xs">
+                                    <div class="min-w-0">
                                         <dt class="text-navy/45">Clientes</dt>
                                         <dd class="font-[Fredoka] font-semibold text-base mt-0.5">{{ $segment['size'] ?? '—' }}</dd>
                                     </div>
-                                    <div>
+                                    <div class="min-w-0">
                                         <dt class="text-navy/45">ADR</dt>
                                         <dd class="font-[Fredoka] font-semibold text-base mt-0.5">{{ isset($segment['avg_adr']) ? number_format($segment['avg_adr'], 0) . '€' : '—' }}</dd>
                                     </div>

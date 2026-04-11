@@ -1,17 +1,17 @@
 <x-layouts.app title="Nueva campaña">
     <div class="max-w-2xl">
-        <a href="{{ route('campaigns.index') }}" class="text-xs text-navy/45 hover:text-navy transition">
+        <a href="{{ route('campaigns.index') }}" class="text-xs text-navy/45 hover:text-navy transition py-2 -my-2 inline-block">
             ← Campañas
         </a>
 
-        <h1 class="font-[Fredoka] font-semibold text-4xl tracking-tight mt-4 mb-3">
+        <h1 class="font-[Fredoka] font-semibold text-3xl sm:text-4xl tracking-tight mt-3 sm:mt-4 mb-3">
             Nueva campaña
         </h1>
-        <p class="text-navy/60 leading-relaxed mb-12 max-w-xl">
+        <p class="text-navy/60 leading-relaxed mb-10 sm:mb-12 max-w-xl">
             Cuéntale al pipeline qué quieres conseguir. Cuanto más concreto seas — qué hotel, qué público, qué momento del año — mejor será el resultado.
         </p>
 
-        <form method="POST" action="{{ route('campaigns.store') }}" class="space-y-9">
+        <form method="POST" action="{{ route('campaigns.store') }}" class="space-y-8 sm:space-y-9">
             @csrf
 
             <div>
@@ -22,7 +22,8 @@
                     rows="5"
                     required
                     minlength="10"
-                    class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition resize-none leading-relaxed"
+                    autocapitalize="sentences"
+                    class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 text-base text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition resize-y leading-relaxed min-h-[140px]"
                     placeholder="Ej: Aumentar la ocupación del Aurea Catedral en Granada durante junio, dirigiéndome a parejas internacionales que buscan escapadas culturales..."
                 >{{ old('objective') }}</textarea>
                 @error('objective')
@@ -32,7 +33,7 @@
 
             <div>
                 <p class="text-xs text-navy/45 mb-3">¿Sin ideas? Prueba con una de estas:</p>
-                <div class="space-y-2">
+                <div class="space-y-1">
                     @foreach ([
                         'Subir ocupación del Eurostars Torre Sevilla en temporada baja',
                         'Captar clientes italianos para hoteles en Lisboa y Oporto',
@@ -42,9 +43,9 @@
                         <button
                             type="button"
                             onclick="const t = document.getElementById('objective'); t.value = this.querySelector('span:last-child').textContent.trim(); t.focus();"
-                            class="flex items-start gap-3 text-left text-sm text-navy/65 hover:text-navy w-full group transition cursor-pointer"
+                            class="flex items-start gap-3 text-left text-[15px] sm:text-sm text-navy/65 hover:text-navy active:text-navy w-full group transition cursor-pointer py-2 -mx-2 px-2 rounded-lg active:bg-navy/[0.04]"
                         >
-                            <span class="text-copper mt-px shrink-0">→</span>
+                            <span class="text-copper mt-0.5 shrink-0">→</span>
                             <span class="border-b border-navy/0 group-hover:border-navy/30 transition leading-relaxed">{{ $suggestion }}</span>
                         </button>
                     @endforeach
@@ -53,28 +54,30 @@
 
             <div class="pt-8 border-t border-navy/10 space-y-6">
                 <div>
-                    <p class="text-sm font-medium mb-2">Modelo</p>
-                    <div class="inline-flex flex-wrap gap-1 border border-navy/20 rounded-full p-1 bg-white">
-                        @foreach ([
-                            'anthropic' => 'Anthropic',
-                            'google' => 'Google',
-                            'openai' => 'OpenAI',
-                            'deepseek' => 'DeepSeek',
-                            'custom' => 'Custom',
-                        ] as $value => $label)
-                            <label class="cursor-pointer">
-                                <input
-                                    type="radio"
-                                    name="provider"
-                                    value="{{ $value }}"
-                                    class="peer sr-only"
-                                    {{ old('provider', 'anthropic') === $value ? 'checked' : '' }}
-                                >
-                                <span class="block px-3.5 py-1.5 text-xs font-medium rounded-full text-navy/55 peer-checked:bg-navy peer-checked:text-cream transition">
-                                    {{ $label }}
-                                </span>
-                            </label>
-                        @endforeach
+                    <p class="text-sm font-medium mb-3">Modelo</p>
+                    <div class="-mx-1 px-1 overflow-x-auto">
+                        <div class="inline-flex gap-1 border border-navy/20 rounded-2xl p-1 bg-white">
+                            @foreach ([
+                                'anthropic' => 'Anthropic',
+                                'google' => 'Google',
+                                'openai' => 'OpenAI',
+                                'deepseek' => 'DeepSeek',
+                                'custom' => 'Custom',
+                            ] as $value => $label)
+                                <label class="cursor-pointer shrink-0">
+                                    <input
+                                        type="radio"
+                                        name="provider"
+                                        value="{{ $value }}"
+                                        class="peer sr-only"
+                                        {{ old('provider', 'anthropic') === $value ? 'checked' : '' }}
+                                    >
+                                    <span class="block px-3.5 py-2 text-xs font-medium rounded-xl text-navy/55 peer-checked:bg-navy peer-checked:text-cream transition whitespace-nowrap">
+                                        {{ $label }}
+                                    </span>
+                                </label>
+                            @endforeach
+                        </div>
                     </div>
                     @error('provider')
                         <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
@@ -89,8 +92,11 @@
                             name="api_base_url"
                             id="api_base_url"
                             autocomplete="off"
+                            autocapitalize="none"
+                            autocorrect="off"
                             spellcheck="false"
-                            class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 font-mono text-sm text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition"
+                            inputmode="url"
+                            class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 font-mono text-base text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition"
                             placeholder="https://api.together.xyz/v1"
                             value="{{ old('api_base_url') }}"
                         >
@@ -106,8 +112,10 @@
                             name="api_model"
                             id="api_model"
                             autocomplete="off"
+                            autocapitalize="none"
+                            autocorrect="off"
                             spellcheck="false"
-                            class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 font-mono text-sm text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition"
+                            class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 font-mono text-base text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition"
                             placeholder="meta-llama/Llama-3.3-70B-Instruct-Turbo"
                             value="{{ old('api_model') }}"
                         >
@@ -125,8 +133,10 @@
                         id="api_key"
                         required
                         autocomplete="off"
+                        autocapitalize="none"
+                        autocorrect="off"
                         spellcheck="false"
-                        class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 font-mono text-sm text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition"
+                        class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 font-mono text-base text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition"
                         placeholder="sk-ant-..."
                     >
                     <p class="text-xs text-navy/50 mt-2 leading-relaxed max-w-xl">
@@ -139,11 +149,11 @@
                 </div>
             </div>
 
-            <div class="pt-2 flex items-center justify-between gap-4 flex-wrap">
+            <div class="pt-2 flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4">
                 <p class="text-xs text-navy/45 font-mono">
                     {{ $hotelCount }} hoteles · {{ $customerCount }} clientes en base de datos
                 </p>
-                <button type="submit" class="bg-navy text-cream pl-6 pr-5 py-3 rounded-full font-medium hover:bg-navy-light transition inline-flex items-center gap-2">
+                <button type="submit" class="bg-navy text-cream px-6 py-3.5 rounded-full font-medium hover:bg-navy-light transition inline-flex items-center justify-center gap-2 w-full sm:w-auto">
                     Lanzar pipeline
                     <svg class="w-3 h-3 text-copper" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
                 </button>
