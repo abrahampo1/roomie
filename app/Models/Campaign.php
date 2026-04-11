@@ -4,8 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['objective', 'status', 'analysis', 'strategy', 'creative', 'audit', 'quality_score', 'api_provider', 'api_key', 'api_base_url', 'api_model'])]
+#[Fillable(['user_id', 'objective', 'status', 'analysis', 'strategy', 'creative', 'audit', 'quality_score', 'api_provider', 'api_key', 'api_base_url', 'api_model'])]
 class Campaign extends Model
 {
     protected function casts(): array
@@ -18,6 +19,11 @@ class Campaign extends Model
             'quality_score' => 'integer',
             'api_key' => 'encrypted',
         ];
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
     }
 
     public function isComplete(): bool

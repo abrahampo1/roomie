@@ -39,13 +39,28 @@
                 <svg class="w-[18px] h-[18px] text-copper transition-transform group-hover:rotate-90 duration-500" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
                 <span class="font-[Fredoka] font-semibold text-xl tracking-tight">Roomie</span>
             </a>
-            <div class="flex items-center gap-3 sm:gap-7 text-sm">
-                <a href="{{ route('campaigns.index') }}" class="text-navy/55 hover:text-navy transition -my-2 py-2 px-1">
-                    Campañas
-                </a>
-                <a href="{{ route('campaigns.create') }}" class="bg-navy text-cream px-4 py-2.5 rounded-full hover:bg-navy-light transition">
-                    Nueva
-                </a>
+            <div class="flex items-center gap-3 sm:gap-5 text-sm">
+                @auth
+                    <a href="{{ route('campaigns.index') }}" class="text-navy/55 hover:text-navy transition -my-2 py-2 px-1">
+                        Campañas
+                    </a>
+                    <form method="POST" action="{{ route('logout') }}" class="flex">
+                        @csrf
+                        <button type="submit" class="text-navy/55 hover:text-navy transition -my-2 py-2 px-1 cursor-pointer">
+                            Salir
+                        </button>
+                    </form>
+                    <a href="{{ route('campaigns.create') }}" class="bg-navy text-cream px-4 py-2.5 rounded-full hover:bg-navy-light transition">
+                        Nueva
+                    </a>
+                @else
+                    <a href="{{ route('login') }}" class="text-navy/55 hover:text-navy transition -my-2 py-2 px-1">
+                        Entrar
+                    </a>
+                    <a href="{{ route('register') }}" class="bg-navy text-cream px-4 py-2.5 rounded-full hover:bg-navy-light transition">
+                        Crear cuenta
+                    </a>
+                @endauth
             </div>
         </div>
     </nav>

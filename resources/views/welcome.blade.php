@@ -16,14 +16,25 @@
         </p>
 
         <div class="flex flex-wrap items-center gap-x-6 gap-y-4">
-            <a href="{{ route('campaigns.create') }}"
-               class="inline-flex items-center justify-center gap-2 bg-navy text-cream pl-6 pr-5 py-3.5 rounded-full font-medium hover:bg-navy-light transition w-full sm:w-auto">
-                Crear una campaña
-                <svg class="w-3 h-3 text-copper" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
-            </a>
-            <a href="{{ route('campaigns.index') }}" class="text-sm text-navy/60 hover:text-navy underline underline-offset-4 decoration-navy/20 hover:decoration-navy transition py-2 -my-2">
-                Ver campañas anteriores
-            </a>
+            @auth
+                <a href="{{ route('campaigns.create') }}"
+                   class="inline-flex items-center justify-center gap-2 bg-navy text-cream pl-6 pr-5 py-3.5 rounded-full font-medium hover:bg-navy-light transition w-full sm:w-auto">
+                    Crear una campaña
+                    <svg class="w-3 h-3 text-copper" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
+                </a>
+                <a href="{{ route('campaigns.index') }}" class="text-sm text-navy/60 hover:text-navy underline underline-offset-4 decoration-navy/20 hover:decoration-navy transition py-2 -my-2">
+                    Ver campañas anteriores
+                </a>
+            @else
+                <a href="{{ route('register') }}"
+                   class="inline-flex items-center justify-center gap-2 bg-navy text-cream pl-6 pr-5 py-3.5 rounded-full font-medium hover:bg-navy-light transition w-full sm:w-auto">
+                    Crear cuenta y empezar
+                    <svg class="w-3 h-3 text-copper" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
+                </a>
+                <a href="{{ route('login') }}" class="text-sm text-navy/60 hover:text-navy underline underline-offset-4 decoration-navy/20 hover:decoration-navy transition py-2 -my-2">
+                    Ya tengo cuenta
+                </a>
+            @endauth
         </div>
     </section>
 

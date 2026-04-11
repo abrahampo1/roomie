@@ -14,7 +14,10 @@ class CampaignController extends Controller
 {
     public function index()
     {
-        $campaigns = Campaign::latest()->get();
+        $campaigns = Campaign::query()
+            ->where('user_id', auth()->id())
+            ->latest()
+            ->get();
 
         return view('campaigns.index', compact('campaigns'));
     }
@@ -38,6 +41,7 @@ class CampaignController extends Controller
         ]);
 
         $campaign = Campaign::create([
+            'user_id' => auth()->id(),
             'objective' => $validated['objective'],
             'api_provider' => $validated['provider'],
             'api_key' => $validated['api_key'],
@@ -54,6 +58,8 @@ class CampaignController extends Controller
 
     public function show(Campaign $campaign)
     {
+        abort_unless($campaign->user_id === auth()->id(), 403);
+
         return view('campaigns.show', compact('campaign'));
     }
 }
