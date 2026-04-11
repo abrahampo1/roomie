@@ -2,6 +2,20 @@
     $allowRealSends = (bool) config('services.roomie.allow_real_sends', false);
     $recipientCount = $campaign->recipients()->count();
     $alreadySent = $campaign->send_enabled;
+    $providerLabel = $campaign->api_provider
+        ? \App\Services\LLM\LlmClientFactory::label($campaign->api_provider)
+        : null;
+    $providerDisplay = $providerLabel;
+    if ($providerLabel && $campaign->api_provider === 'custom' && $campaign->api_model) {
+        $providerDisplay .= ' · '.$campaign->api_model;
+    }
+    $keyPlaceholder = match ($campaign->api_provider) {
+        'anthropic' => 'sk-ant-...',
+        'google' => 'AIza...',
+        'openai' => 'sk-proj-...',
+        'deepseek' => 'sk-...',
+        default => 'sk-...',
+    };
 @endphp
 
 <section class="mt-20 sm:mt-24 pt-12 border-t border-navy/15">
@@ -79,7 +93,7 @@
 
                 <div class="mt-5 space-y-5 pl-4 border-l-2 border-copper/40">
                     <p class="text-xs text-navy/55 leading-relaxed max-w-xl">
-                        Si los destinatarios no reaccionan, Roomie puede generar emails de seguimiento cada vez más insistentes hasta que hagan click o se den de baja. Para ello necesita guardar tu clave API cifrada en el servidor — hasta {{ (int) config('services.roomie.followup_max_retention_days', 14) }} días o hasta que la secuencia termine, lo que ocurra antes. Puedes revocarla desde el botón "Detener secuencia".
+                        Si los destinatarios no reaccionan, Roomie puede generar emails de seguimiento cada vez más insistentes hasta que hagan click o se den de baja. Los follow-ups usan <strong class="text-navy">la misma IA que la campaña original</strong> — @if ($providerDisplay){{ $providerDisplay }}@else tu proveedor configurado @endif — así que necesitamos guardar tu clave API cifrada en el servidor, hasta {{ (int) config('services.roomie.followup_max_retention_days', 14) }} días o hasta que la secuencia termine, lo que ocurra antes. Puedes revocarla desde el botón "Detener secuencia".
                     </p>
 
                     <label class="flex items-start gap-2 text-sm cursor-pointer select-none">
@@ -91,7 +105,12 @@
 
                     <div id="followups-config" hidden class="space-y-4">
                         <div>
-                            <label for="followup_api_key" class="block text-xs text-navy/55 mb-1.5">Vuelve a pegar tu API key</label>
+                            <label for="followup_api_key" class="block text-xs text-navy/55 mb-1.5">
+                                Vuelve a pegar tu API key
+                                @if ($providerLabel)
+                                    <span class="text-navy font-medium">de {{ $providerLabel }}</span>
+                                @endif
+                            </label>
                             <input
                                 type="password"
                                 name="followup_api_key"
@@ -101,9 +120,15 @@
                                 autocorrect="off"
                                 spellcheck="false"
                                 class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 font-mono text-base text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition"
-                                placeholder="sk-ant-..."
+                                placeholder="{{ $keyPlaceholder }}"
                             >
-                            <p class="text-xs text-navy/45 mt-1.5">Se cifrará con tu APP_KEY antes de guardarse.</p>
+                            <p class="text-xs text-navy/45 mt-1.5">
+                                Tiene que ser del mismo proveedor y modelo que la campaña original
+                                @if ($campaign->api_provider === 'custom' && $campaign->api_base_url)
+                                    ({{ parse_url($campaign->api_base_url, PHP_URL_HOST) ?? $campaign->api_base_url }})
+                                @endif.
+                                Se cifrará con tu APP_KEY antes de guardarse.
+                            </p>
                         </div>
 
                         <div class="flex gap-4">
