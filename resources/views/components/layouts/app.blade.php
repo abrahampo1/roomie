@@ -55,7 +55,7 @@
         <div class="mx-auto max-w-5xl px-5 sm:px-6 py-9 sm:py-10 flex flex-col sm:flex-row sm:flex-wrap sm:items-baseline sm:justify-between gap-3 sm:gap-4">
             <div>
                 <p class="font-[Fredoka] font-semibold text-base">Roomie</p>
-                <p class="text-xs text-navy/45 mt-1">Reto Eurostars Hotel Company · Impacthon 2026</p>
+                <p class="text-xs text-navy/45 mt-1">Reto Eurostars Hotel Company</p>
             </div>
             <p class="text-xs text-navy/40 italic font-[Fredoka]">"Make me want to travel"</p>
         </div>
