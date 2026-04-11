@@ -33,6 +33,7 @@ class CampaignController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'name' => ['nullable', 'string', 'max:120'],
             'objective' => 'required|string|min:10|max:1000',
             'provider' => ['required', 'string', Rule::in(LlmClientFactory::PROVIDERS)],
             'api_key' => ['required', 'string', 'min:8', 'max:200'],
@@ -42,6 +43,7 @@ class CampaignController extends Controller
 
         $campaign = Campaign::create([
             'user_id' => auth()->id(),
+            'name' => $validated['name'] ?? null,
             'objective' => $validated['objective'],
             'api_provider' => $validated['provider'],
             'api_key' => $validated['api_key'],

@@ -15,6 +15,27 @@
             @csrf
 
             <div>
+                <label for="name" class="block text-sm font-medium mb-2">
+                    Nombre <span class="text-navy/40 font-normal text-xs ml-1">opcional</span>
+                </label>
+                <input
+                    type="text"
+                    name="name"
+                    id="name"
+                    maxlength="120"
+                    autocomplete="off"
+                    autocapitalize="sentences"
+                    value="{{ old('name') }}"
+                    class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 text-base text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition"
+                    placeholder="Ej. Junio cultural en Granada"
+                >
+                <p class="text-xs text-navy/45 mt-1.5">Si lo dejas vacío, usaremos el que proponga el Estratega.</p>
+                @error('name')
+                    <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <div>
                 <label for="objective" class="block text-sm font-medium mb-2">Objetivo</label>
                 <textarea
                     name="objective"

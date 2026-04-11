@@ -33,6 +33,21 @@ Route::middleware('auth')->group(function () {
             'has_strategy' => $campaign->strategy !== null,
             'has_creative' => $campaign->creative !== null,
             'has_audit' => $campaign->audit !== null,
+            'analysis_preview' => $campaign->analysis ? [
+                'segments_count' => is_array($campaign->analysis['segments'] ?? null) ? count($campaign->analysis['segments']) : 0,
+                'focus_segment' => $campaign->analysis['recommended_focus_segment'] ?? null,
+            ] : null,
+            'strategy_preview' => $campaign->strategy ? [
+                'hotel_name' => $campaign->strategy['recommended_hotel']['name'] ?? null,
+                'channel' => $campaign->strategy['channel'] ?? null,
+                'segment' => $campaign->strategy['target_segment']['name'] ?? null,
+            ] : null,
+            'creative_preview' => $campaign->creative ? [
+                'subject' => $campaign->creative['subject_line'] ?? null,
+            ] : null,
+            'audit_preview' => $campaign->audit ? [
+                'verdict' => $campaign->audit['final_verdict'] ?? null,
+            ] : null,
         ]);
     })->name('campaigns.status');
 });

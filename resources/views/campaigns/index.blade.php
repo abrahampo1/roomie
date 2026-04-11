@@ -54,7 +54,7 @@
                             @endif
                         </div>
                         <p class="font-[Fredoka] font-semibold text-base sm:text-[17px] leading-snug group-hover:text-copper-dark transition line-clamp-2 sm:truncate">
-                            {{ $campaign->strategy['campaign_name'] ?? $campaign->objective }}
+                            {{ $campaign->name ?? $campaign->strategy['campaign_name'] ?? $campaign->objective }}
                         </p>
                         <p class="text-sm text-navy/50 mt-1 line-clamp-2 sm:truncate">{{ $campaign->objective }}</p>
                     </a>
