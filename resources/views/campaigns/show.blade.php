@@ -6,6 +6,9 @@
             'pending' => 'En cola',
             'failed' => 'Fallida',
         ];
+        $providerLabel = $campaign->api_provider
+            ? \App\Services\LLM\LlmClientFactory::label($campaign->api_provider)
+            : null;
     @endphp
 
     <a href="{{ route('campaigns.index') }}" class="text-xs text-navy/45 hover:text-navy transition">
@@ -17,6 +20,9 @@
             #{{ str_pad($campaign->id, 3, '0', STR_PAD_LEFT) }}
             @if ($campaign->created_at)
                 · {{ $campaign->created_at->translatedFormat('d M Y') }}
+            @endif
+            @if ($providerLabel)
+                · {{ $providerLabel }}
             @endif
         </p>
         <h1 class="font-[Fredoka] font-semibold text-4xl md:text-5xl leading-[1.05] tracking-tight mb-4 max-w-3xl">

@@ -51,7 +51,56 @@
                 </div>
             </div>
 
-            <div class="pt-6 border-t border-navy/10 flex items-center justify-between gap-4 flex-wrap">
+            <div class="pt-8 border-t border-navy/10 space-y-6">
+                <div>
+                    <p class="text-sm font-medium mb-2">Modelo</p>
+                    <div class="inline-flex border border-navy/20 rounded-full p-1 bg-white">
+                        @foreach ([
+                            'anthropic' => 'Anthropic Claude',
+                            'google' => 'Google Gemini',
+                        ] as $value => $label)
+                            <label class="cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="provider"
+                                    value="{{ $value }}"
+                                    class="peer sr-only"
+                                    {{ old('provider', 'anthropic') === $value ? 'checked' : '' }}
+                                >
+                                <span class="block px-4 py-1.5 text-xs font-medium rounded-full text-navy/55 peer-checked:bg-navy peer-checked:text-cream transition">
+                                    {{ $label }}
+                                </span>
+                            </label>
+                        @endforeach
+                    </div>
+                    @error('provider')
+                        <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="api_key" class="block text-sm font-medium mb-2">Tu API key</label>
+                    <input
+                        type="password"
+                        name="api_key"
+                        id="api_key"
+                        required
+                        autocomplete="off"
+                        spellcheck="false"
+                        class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 font-mono text-sm text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition"
+                        placeholder="sk-ant-..."
+                    >
+                    <p class="text-xs text-navy/50 mt-2 leading-relaxed max-w-xl">
+                        La clave se guarda en tu navegador y solo se envía al servidor para esta campaña. Se borra de la base de datos en cuanto el pipeline termina.
+                        <a id="provider-link" href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" class="underline underline-offset-2 decoration-navy/30 hover:decoration-navy">Conseguir una clave</a>.
+                    </p>
+                    @error('api_key')
+                        <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
+                    @enderror
+                </div>
+            </div>
+
+            <div class="pt-2 flex items-center justify-between gap-4 flex-wrap">
                 <p class="text-xs text-navy/45 font-mono">
                     {{ $hotelCount }} hoteles · {{ $customerCount }} clientes en base de datos
                 </p>
@@ -62,4 +111,53 @@
             </div>
         </form>
     </div>
+
+    @push('scripts')
+    <script>
+        (function () {
+            const placeholders = {
+                anthropic: 'sk-ant-...',
+                google: 'AIza...',
+            };
+            const docs = {
+                anthropic: 'https://console.anthropic.com/settings/keys',
+                google: 'https://aistudio.google.com/apikey',
+            };
+            const storageKey = (provider) => 'roomie:llm-key:' + provider;
+
+            const keyInput = document.getElementById('api_key');
+            const link = document.getElementById('provider-link');
+            const radios = document.querySelectorAll('input[name="provider"]');
+            const form = keyInput.closest('form');
+
+            function applyProvider(provider) {
+                keyInput.placeholder = placeholders[provider] ?? '';
+                if (link) link.href = docs[provider] ?? '#';
+                try {
+                    keyInput.value = localStorage.getItem(storageKey(provider)) || '';
+                } catch (e) {
+                    keyInput.value = '';
+                }
+            }
+
+            radios.forEach((radio) => {
+                radio.addEventListener('change', (e) => applyProvider(e.target.value));
+            });
+
+            const checked = document.querySelector('input[name="provider"]:checked');
+            if (checked) applyProvider(checked.value);
+
+            form.addEventListener('submit', () => {
+                const provider = document.querySelector('input[name="provider"]:checked')?.value;
+                if (provider && keyInput.value) {
+                    try {
+                        localStorage.setItem(storageKey(provider), keyInput.value);
+                    } catch (e) {
+                        // ignore quota / private mode errors
+                    }
+                }
+            });
+        })();
+    </script>
+    @endpush
 </x-layouts.app>

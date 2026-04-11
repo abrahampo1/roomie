@@ -6,7 +6,9 @@ use App\Jobs\RunCampaignPipeline;
 use App\Models\Campaign;
 use App\Models\Customer;
 use App\Models\Hotel;
+use App\Services\LLM\LlmClientFactory;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class CampaignController extends Controller
 {
@@ -29,10 +31,14 @@ class CampaignController extends Controller
     {
         $validated = $request->validate([
             'objective' => 'required|string|min:10|max:1000',
+            'provider' => ['required', 'string', Rule::in(LlmClientFactory::PROVIDERS)],
+            'api_key' => ['required', 'string', 'min:20', 'max:200'],
         ]);
 
         $campaign = Campaign::create([
             'objective' => $validated['objective'],
+            'api_provider' => $validated['provider'],
+            'api_key' => $validated['api_key'],
             'status' => 'pending',
         ]);
 

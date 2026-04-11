@@ -45,11 +45,9 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Configura tu clave de Anthropic en `.env`:
+Roomie usa **bring your own key**: cada usuario introduce su propia clave de Anthropic Claude o Google Gemini al crear una campaña. La clave se cifra, se usa para esa ejecución del pipeline y se borra de la base de datos en cuanto el job termina (éxito o fallo). El frontend la guarda en `localStorage` para no tener que pegarla cada vez.
 
-```
-ANTHROPIC_API_KEY=sk-ant-...
-```
+No hace falta configurar ninguna clave en `.env`.
 
 Prepara la base de datos y carga los datos de ejemplo:
 

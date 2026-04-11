@@ -5,7 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 
-#[Fillable(['objective', 'status', 'analysis', 'strategy', 'creative', 'audit', 'quality_score'])]
+#[Fillable(['objective', 'status', 'analysis', 'strategy', 'creative', 'audit', 'quality_score', 'api_provider', 'api_key'])]
 class Campaign extends Model
 {
     protected function casts(): array
@@ -16,6 +16,7 @@ class Campaign extends Model
             'creative' => 'array',
             'audit' => 'array',
             'quality_score' => 'integer',
+            'api_key' => 'encrypted',
         ];
     }
 

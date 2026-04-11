@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Campaign;
 use App\Services\Campaign\CampaignPipeline;
+use App\Services\LLM\LlmClientFactory;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -24,10 +25,22 @@ class RunCampaignPipeline implements ShouldQueue
 
     public function handle(): void
     {
-        $pipeline = new CampaignPipeline(
-            apiKey: config('services.anthropic.api_key'),
-        );
+        try {
+            $client = LlmClientFactory::make(
+                $this->campaign->api_provider,
+                $this->campaign->api_key,
+            );
 
-        $pipeline->run($this->campaign);
+            (new CampaignPipeline($client))->run($this->campaign);
+        } catch (\Throwable $e) {
+            if ($this->campaign->status !== 'failed') {
+                $this->campaign->update(['status' => 'failed']);
+            }
+
+            throw $e;
+        } finally {
+            // BYOK: never persist the user's API key beyond the run.
+            $this->campaign->update(['api_key' => null]);
+        }
     }
 }

@@ -5,14 +5,13 @@ namespace App\Services\Campaign;
 use App\Models\Campaign;
 use App\Models\Customer;
 use App\Models\Hotel;
-use Illuminate\Support\Facades\Http;
+use App\Services\LLM\LlmClient;
 use Illuminate\Support\Facades\Log;
 
 class CampaignPipeline
 {
     public function __construct(
-        private string $apiKey,
-        private string $model = 'claude-sonnet-4-20250514',
+        private LlmClient $client,
     ) {}
 
     public function run(Campaign $campaign): void
@@ -83,7 +82,7 @@ class CampaignPipeline
         Responde SOLO el JSON, sin markdown ni explicaciones.
         PROMPT;
 
-        return $this->callClaude($prompt, 'analyst');
+        return $this->client->complete($prompt, 'analyst');
     }
 
     private function runStrategist(string $objective, array $analysis, string $hotels): array
@@ -128,7 +127,7 @@ class CampaignPipeline
         Responde SOLO el JSON, sin markdown ni explicaciones.
         PROMPT;
 
-        return $this->callClaude($prompt, 'strategist');
+        return $this->client->complete($prompt, 'strategist');
     }
 
     private function runCreative(string $objective, array $strategy): array
@@ -166,7 +165,7 @@ class CampaignPipeline
         Responde SOLO el JSON, sin markdown ni explicaciones. El body_html debe ser HTML valido con estilos inline.
         PROMPT;
 
-        return $this->callClaude($prompt, 'creative');
+        return $this->client->complete($prompt, 'creative');
     }
 
     private function runAuditor(string $objective, array $strategy, array $creative): array
@@ -204,42 +203,7 @@ class CampaignPipeline
         Se critico pero justo. Responde SOLO el JSON, sin markdown ni explicaciones.
         PROMPT;
 
-        return $this->callClaude($prompt, 'auditor');
-    }
-
-    private function callClaude(string $prompt, string $agentName): array
-    {
-        $response = Http::withHeaders([
-            'x-api-key' => $this->apiKey,
-            'anthropic-version' => '2023-06-01',
-            'content-type' => 'application/json',
-        ])->timeout(120)->post('https://api.anthropic.com/v1/messages', [
-            'model' => $this->model,
-            'max_tokens' => 4096,
-            'messages' => [
-                ['role' => 'user', 'content' => $prompt],
-            ],
-        ]);
-
-        if (! $response->successful()) {
-            throw new \RuntimeException("Claude API error in {$agentName}: " . $response->body());
-        }
-
-        $text = $response->json('content.0.text', '');
-
-        $decoded = json_decode($text, true);
-
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            if (preg_match('/\{[\s\S]*\}/', $text, $matches)) {
-                $decoded = json_decode($matches[0], true);
-            }
-
-            if (json_last_error() !== JSON_ERROR_NONE) {
-                throw new \RuntimeException("Invalid JSON from {$agentName}: {$text}");
-            }
-        }
-
-        return $decoded;
+        return $this->client->complete($prompt, 'auditor');
     }
 
     private function buildHotelsContext(): string
