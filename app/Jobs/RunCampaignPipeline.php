@@ -5,6 +5,7 @@ namespace App\Jobs;
 use App\Models\Campaign;
 use App\Services\Campaign\CampaignPipeline;
 use App\Services\LLM\LlmClientFactory;
+use App\Services\MarketIntelligence\MarketIntelligenceService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -33,7 +34,7 @@ class RunCampaignPipeline implements ShouldQueue
                 $this->campaign->api_model,
             );
 
-            (new CampaignPipeline($client))->run($this->campaign);
+            (new CampaignPipeline($client, new MarketIntelligenceService()))->run($this->campaign);
         } catch (\Throwable $e) {
             if ($this->campaign->status !== 'failed') {
                 $this->campaign->update(['status' => 'failed']);

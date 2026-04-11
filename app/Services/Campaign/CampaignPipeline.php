@@ -6,6 +6,7 @@ use App\Models\Campaign;
 use App\Models\Customer;
 use App\Models\Hotel;
 use App\Services\LLM\LlmClient;
+use App\Services\MarketIntelligence\MarketIntelligenceService;
 use Illuminate\Support\Facades\Log;
 
 class CampaignPipeline
@@ -16,6 +17,7 @@ class CampaignPipeline
 
     public function __construct(
         private LlmClient $client,
+        private MarketIntelligenceService $market,
     ) {}
 
     public function run(Campaign $campaign): void
@@ -28,11 +30,12 @@ class CampaignPipeline
         try {
             $hotelsContext = $this->buildHotelsContext();
             $customersContext = $this->buildCustomersContext();
+            $marketContext = $this->market->getMarketContext($this->collectUniqueCities());
 
-            $analysis = $this->runAnalyst($campaign->objective, $hotelsContext, $customersContext);
+            $analysis = $this->runAnalyst($campaign->objective, $hotelsContext, $customersContext, $marketContext);
             $campaign->update(['analysis' => $analysis]);
 
-            $strategy = $this->runStrategist($campaign->objective, $analysis, $hotelsContext);
+            $strategy = $this->runStrategist($campaign->objective, $analysis, $hotelsContext, $marketContext);
             $campaign->update(['strategy' => $strategy]);
 
             $creative = $this->runCreative($campaign->objective, $strategy);
@@ -56,8 +59,12 @@ class CampaignPipeline
         }
     }
 
-    private function runAnalyst(string $objective, string $hotels, string $customers): array
+    private function runAnalyst(string $objective, string $hotels, string $customers, string $marketContext): array
     {
+        $marketBlock = $marketContext !== ''
+            ? "CONTEXTO DE MERCADO:\n{$marketContext}\n\n"
+            : '';
+
         $prompt = <<<PROMPT
         Eres el Agente Analista de campañas de marketing hotelero para Eurostars Hotel Company.
 
@@ -66,7 +73,7 @@ class CampaignPipeline
         DATOS DE HOTELES:
         {$hotels}
 
-        DATOS DE CLIENTES (muestra):
+        {$marketBlock}DATOS DE CLIENTES (muestra):
         {$customers}
 
         Analiza los datos y responde en JSON con esta estructura exacta:
@@ -92,10 +99,13 @@ class CampaignPipeline
         return $this->client->complete($prompt, 'analyst');
     }
 
-    private function runStrategist(string $objective, array $analysis, string $hotels): array
+    private function runStrategist(string $objective, array $analysis, string $hotels, string $marketContext): array
     {
         $analysisJson = json_encode($analysis, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         $intensity = $this->intensityGuidance();
+        $marketBlock = $marketContext !== ''
+            ? "CONTEXTO DE MERCADO:\n{$marketContext}\nCuando cites este contexto de mercado, sé específico con números (ocupación, temperaturas, países de origen).\n\n"
+            : '';
 
         $prompt = <<<PROMPT
         Eres el Agente Estratega de campañas de marketing hotelero para Eurostars Hotel Company.
@@ -108,7 +118,7 @@ class CampaignPipeline
         HOTELES DISPONIBLES:
         {$hotels}
 
-        {$intensity}
+        {$marketBlock}{$intensity}
 
         Diseña la estrategia de campaña. El "tone" y el "key_message" DEBEN reflejar los niveles de intensidad indicados. Responde en JSON con esta estructura exacta:
         {
@@ -254,6 +264,22 @@ class CampaignPipeline
         - Agresividad: {$this->aggressiveness}/5 — {$agg}
         - Manipulación: {$this->manipulation}/5 — {$man}
         TXT;
+    }
+
+    /**
+     * @return array<int, array{city: string, country: string}>
+     */
+    private function collectUniqueCities(): array
+    {
+        return Hotel::query()
+            ->select('city_name', 'country_id')
+            ->distinct()
+            ->get()
+            ->map(fn ($h) => [
+                'city' => (string) $h->city_name,
+                'country' => (string) $h->country_id,
+            ])
+            ->all();
     }
 
     private function buildHotelsContext(): string
