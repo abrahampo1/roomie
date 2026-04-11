@@ -10,11 +10,11 @@ beforeEach(function () {
     $this->withoutVite();
 });
 
-it('renders the index page for an authenticated user', function () {
+it('renders the settings page with the webhooks section', function () {
     $user = User::factory()->create();
 
     $this->actingAs($user)
-        ->get('/settings/webhooks')
+        ->get('/settings/api-token')
         ->assertStatus(200)
         ->assertSee('Webhooks');
 });
@@ -33,7 +33,7 @@ it('creates a webhook via the form and flashes the secret once', function () {
         ->and($webhook->user_id)->toBe($user->id)
         ->and($webhook->events)->toBe(['campaign.completed']);
 
-    $response->assertRedirect(route('settings.webhooks.show', $webhook))
+    $response->assertRedirect(route('settings.api-token.show'))
         ->assertSessionHas('new_webhook_secret');
 });
 
@@ -50,12 +50,40 @@ it('deletes a webhook from the settings UI', function () {
 
     $this->actingAs($user)
         ->post("/settings/webhooks/{$webhook->id}/delete")
-        ->assertRedirect(route('settings.webhooks.index'));
+        ->assertRedirect(route('settings.api-token.show'));
 
     expect(Webhook::find($webhook->id))->toBeNull();
 });
 
-it('forbids accessing another users webhook', function () {
+it('toggles a webhook active state from the settings UI', function () {
+    $user = User::factory()->create();
+    $webhook = Webhook::create([
+        'user_id' => $user->id,
+        'name' => 'Togglable',
+        'url' => 'https://example.com/t',
+        'secret' => 'whsec_x',
+        'events' => ['*'],
+        'active' => true,
+        'consecutive_failures' => 7,
+    ]);
+
+    $this->actingAs($user)
+        ->post("/settings/webhooks/{$webhook->id}", ['active' => '0'])
+        ->assertRedirect(route('settings.api-token.show'));
+
+    expect($webhook->fresh()->active)->toBeFalse();
+
+    // Re-activating resets the failure counter
+    $this->actingAs($user)
+        ->post("/settings/webhooks/{$webhook->id}", ['active' => '1'])
+        ->assertRedirect(route('settings.api-token.show'));
+
+    $fresh = $webhook->fresh();
+    expect($fresh->active)->toBeTrue()
+        ->and($fresh->consecutive_failures)->toBe(0);
+});
+
+it('forbids posting to another users webhook', function () {
     $owner = User::factory()->create();
     $stranger = User::factory()->create();
 
@@ -69,6 +97,6 @@ it('forbids accessing another users webhook', function () {
     ]);
 
     $this->actingAs($stranger)
-        ->get("/settings/webhooks/{$webhook->id}")
+        ->post("/settings/webhooks/{$webhook->id}/delete")
         ->assertStatus(403);
 });

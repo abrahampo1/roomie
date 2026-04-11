@@ -10,31 +10,9 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
-use Illuminate\View\View;
 
 class WebhookSettingsController extends Controller
 {
-    public function index(): View
-    {
-        $webhooks = Auth::user()
-            ->webhooks()
-            ->latest()
-            ->get();
-
-        return view('settings.webhooks.index', [
-            'webhooks' => $webhooks,
-            'newSecret' => session('new_webhook_secret'),
-            'newWebhookId' => session('new_webhook_id'),
-        ]);
-    }
-
-    public function create(): View
-    {
-        return view('settings.webhooks.create', [
-            'events' => WebhookEvents::all(),
-        ]);
-    }
-
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
@@ -48,7 +26,7 @@ class WebhookSettingsController extends Controller
 
         if ($events === null) {
             return redirect()
-                ->route('settings.webhooks.create')
+                ->route('settings.api-token.show')
                 ->withErrors(['events' => 'Uno o más eventos no son válidos.'])
                 ->withInput();
         }
@@ -64,68 +42,30 @@ class WebhookSettingsController extends Controller
         ]);
 
         return redirect()
-            ->route('settings.webhooks.show', $webhook)
+            ->route('settings.api-token.show')
             ->with('new_webhook_secret', $secret)
             ->with('new_webhook_id', $webhook->id);
-    }
-
-    public function show(Webhook $webhook): View
-    {
-        $this->authorizeWebhook($webhook);
-
-        $deliveries = $webhook->deliveries()
-            ->latest()
-            ->limit(25)
-            ->get();
-
-        return view('settings.webhooks.show', [
-            'webhook' => $webhook,
-            'deliveries' => $deliveries,
-            'newSecret' => session('new_webhook_secret'),
-            'newWebhookId' => session('new_webhook_id'),
-        ]);
     }
 
     public function update(Request $request, Webhook $webhook): RedirectResponse
     {
         $this->authorizeWebhook($webhook);
 
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:120'],
-            'url' => ['required', 'url', 'starts_with:https://', 'max:500'],
-            'events' => ['required', 'array', 'min:1'],
-            'events.*' => ['string'],
-            'active' => ['nullable', 'boolean'],
-        ]);
-
-        $events = WebhookEvents::normalize($validated['events']);
-
-        if ($events === null) {
-            return redirect()
-                ->route('settings.webhooks.show', $webhook)
-                ->withErrors(['events' => 'Uno o más eventos no son válidos.'])
-                ->withInput();
-        }
-
-        $updates = [
-            'name' => $validated['name'],
-            'url' => $validated['url'],
-            'events' => $events,
-        ];
-
         $shouldActivate = $request->boolean('active');
+
+        $updates = ['active' => $shouldActivate];
+
+        // Re-activating a webhook resets the failure counter so a fixed
+        // endpoint doesn't auto-disable again on the next single failure.
         if ($shouldActivate && ! $webhook->active) {
-            $updates['active'] = true;
             $updates['consecutive_failures'] = 0;
-        } elseif (! $shouldActivate) {
-            $updates['active'] = false;
         }
 
         $webhook->update($updates);
 
         return redirect()
-            ->route('settings.webhooks.show', $webhook)
-            ->with('message', 'Webhook actualizado.');
+            ->route('settings.api-token.show')
+            ->with('message', $shouldActivate ? 'Webhook reactivado.' : 'Webhook desactivado.');
     }
 
     public function destroy(Webhook $webhook): RedirectResponse
@@ -135,7 +75,7 @@ class WebhookSettingsController extends Controller
         $webhook->delete();
 
         return redirect()
-            ->route('settings.webhooks.index')
+            ->route('settings.api-token.show')
             ->with('message', 'Webhook eliminado.');
     }
 
@@ -147,7 +87,7 @@ class WebhookSettingsController extends Controller
         $webhook->update(['secret' => $secret]);
 
         return redirect()
-            ->route('settings.webhooks.show', $webhook)
+            ->route('settings.api-token.show')
             ->with('new_webhook_secret', $secret)
             ->with('new_webhook_id', $webhook->id);
     }
@@ -176,7 +116,7 @@ class WebhookSettingsController extends Controller
         DeliverWebhookJob::dispatch($delivery->id);
 
         return redirect()
-            ->route('settings.webhooks.show', $webhook)
+            ->route('settings.api-token.show')
             ->with('message', 'Evento de prueba en cola.');
     }
 

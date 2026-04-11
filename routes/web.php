@@ -55,15 +55,11 @@ Route::middleware('auth')->group(function () {
     Route::post('settings/api-token/revoke', [ApiTokenController::class, 'revoke'])
         ->name('settings.api-token.revoke');
 
-    // Webhooks management UI
-    Route::get('settings/webhooks', [WebhookSettingsController::class, 'index'])
-        ->name('settings.webhooks.index');
-    Route::get('settings/webhooks/create', [WebhookSettingsController::class, 'create'])
-        ->name('settings.webhooks.create');
+    // Webhooks live on the same page as the API token — all actions POST
+    // back there and the unified settings view renders the webhook list,
+    // create form and delivery history inline.
     Route::post('settings/webhooks', [WebhookSettingsController::class, 'store'])
         ->name('settings.webhooks.store');
-    Route::get('settings/webhooks/{webhook}', [WebhookSettingsController::class, 'show'])
-        ->name('settings.webhooks.show');
     Route::post('settings/webhooks/{webhook}', [WebhookSettingsController::class, 'update'])
         ->name('settings.webhooks.update');
     Route::post('settings/webhooks/{webhook}/delete', [WebhookSettingsController::class, 'destroy'])
