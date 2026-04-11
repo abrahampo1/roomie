@@ -1,81 +1,70 @@
 <x-layouts.app title="Campaña">
-    {{-- ═══════════════════════ HEADER ═══════════════════════ --}}
-    <section class="relative mb-10 pb-8 border-b-2 border-navy">
-        <svg class="absolute -top-2 right-4 w-14 h-14 text-copper animate-[spin_22s_linear_infinite]" viewBox="0 0 24 24">
-            <use href="#roomie-sparkle"/>
-        </svg>
+    @php
+        $statusLabels = [
+            'completed' => 'Completada',
+            'processing' => 'En curso',
+            'pending' => 'En cola',
+            'failed' => 'Fallida',
+        ];
+    @endphp
 
-        <a href="{{ route('campaigns.index') }}" class="inline-flex items-center gap-1 text-xs uppercase tracking-widest text-navy/50 hover:text-navy transition mb-5">
-            &larr; Todas las campañas
-        </a>
+    <a href="{{ route('campaigns.index') }}" class="text-xs text-navy/45 hover:text-navy transition">
+        ← Campañas
+    </a>
 
-        <div class="flex items-end justify-between gap-6 flex-wrap">
-            <div class="flex-1 min-w-0">
-                <p class="text-xs uppercase tracking-[0.3em] text-copper font-bold mb-2">
-                    / campaña #{{ str_pad($campaign->id, 3, '0', STR_PAD_LEFT) }}
-                </p>
-                <h1 class="font-[Fredoka] font-bold leading-[0.9] tracking-tight text-[clamp(2rem,6vw,4.5rem)] mb-3">
-                    {{ $campaign->strategy['campaign_name'] ?? 'Sin título' }}
-                </h1>
-                <p class="text-navy/55 max-w-2xl">{{ $campaign->objective }}</p>
-            </div>
-            <div class="flex items-center gap-4 shrink-0">
-                @if ($campaign->quality_score)
-                    <div class="relative bg-white rounded-2xl border-2 border-navy px-5 py-3 shadow-[4px_4px_0_0_#1a1a2e] text-center">
-                        <p class="text-4xl font-[Fredoka] font-bold leading-none
-                            {{ $campaign->quality_score >= 80 ? 'text-emerald-600' : ($campaign->quality_score >= 60 ? 'text-amber-600' : 'text-red-600') }}">
-                            {{ $campaign->quality_score }}
-                        </p>
-                        <p class="text-[9px] uppercase tracking-widest text-navy/50 mt-1">/ score</p>
-                    </div>
-                @endif
-                <span class="inline-flex items-center gap-2 text-[10px] uppercase tracking-widest font-bold px-3 py-2 rounded-full border-2 border-navy
-                    {{ $campaign->status === 'completed' ? 'bg-emerald-100 text-emerald-800' : '' }}
-                    {{ $campaign->status === 'processing' ? 'bg-amber-100 text-amber-800' : '' }}
-                    {{ $campaign->status === 'pending' ? 'bg-navy/10 text-navy/60' : '' }}
-                    {{ $campaign->status === 'failed' ? 'bg-red-100 text-red-800' : '' }}">
-                    <span class="w-1.5 h-1.5 rounded-full
-                        {{ $campaign->status === 'completed' ? 'bg-emerald-500' : '' }}
-                        {{ $campaign->status === 'processing' ? 'bg-amber-500 animate-pulse' : '' }}
-                        {{ $campaign->status === 'pending' ? 'bg-navy/40 animate-pulse' : '' }}
-                        {{ $campaign->status === 'failed' ? 'bg-red-500' : '' }}"></span>
-                    {{ $campaign->status }}
-                </span>
-            </div>
+    <header class="pt-4 pb-9 mb-12 border-b border-navy/15">
+        <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-3">
+            #{{ str_pad($campaign->id, 3, '0', STR_PAD_LEFT) }}
+            @if ($campaign->created_at)
+                · {{ $campaign->created_at->translatedFormat('d M Y') }}
+            @endif
+        </p>
+        <h1 class="font-[Fredoka] font-semibold text-4xl md:text-5xl leading-[1.05] tracking-tight mb-4 max-w-3xl">
+            {{ $campaign->strategy['campaign_name'] ?? 'Sin título' }}
+        </h1>
+        <p class="text-navy/60 leading-relaxed max-w-2xl">{{ $campaign->objective }}</p>
+
+        <div class="flex items-center gap-7 mt-7">
+            @if ($campaign->quality_score)
+                <div class="flex items-baseline gap-2">
+                    <span class="font-[Fredoka] font-semibold text-2xl
+                        {{ $campaign->quality_score >= 80 ? 'text-emerald-700' : ($campaign->quality_score >= 60 ? 'text-amber-700' : 'text-red-700') }}">
+                        {{ $campaign->quality_score }}<span class="text-navy/30 text-sm font-normal">/100</span>
+                    </span>
+                    <span class="text-[11px] text-navy/40 uppercase tracking-wider">score</span>
+                </div>
+            @endif
+            <span class="text-xs
+                {{ $campaign->status === 'completed' ? 'text-emerald-700' : '' }}
+                {{ $campaign->status === 'processing' ? 'text-amber-700' : '' }}
+                {{ $campaign->status === 'pending' ? 'text-navy/55' : '' }}
+                {{ $campaign->status === 'failed' ? 'text-red-700' : '' }}">
+                {{ $statusLabels[$campaign->status] ?? $campaign->status }}
+            </span>
         </div>
-    </section>
+    </header>
 
     @if ($campaign->isProcessing() || $campaign->isPending())
-        <div id="pipeline-status" class="relative bg-white rounded-3xl border-2 border-navy p-8 overflow-hidden shadow-[6px_6px_0_0_#1a1a2e]">
-            <div class="absolute inset-0 opacity-[0.04] text-navy">
-                <svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#pat-stars)"/></svg>
-            </div>
-            <div class="relative">
-                <p class="text-xs uppercase tracking-[0.3em] text-copper font-bold mb-6">/ pipeline en ejecución</p>
-                <div class="space-y-3">
-                    @foreach (['analysis' => 'Analista', 'strategy' => 'Estratega', 'creative' => 'Creativo', 'audit' => 'Auditor'] as $key => $name)
-                        @php $done = (bool) $campaign->$key; @endphp
-                        <div class="relative flex items-center gap-4 p-4 rounded-2xl border-2 {{ $done ? 'border-emerald-600 bg-emerald-50' : 'border-navy/20 bg-sand-light/40' }} transition-all">
-                            <div class="relative w-10 h-10 rounded-xl border-2 {{ $done ? 'border-emerald-600 bg-white' : 'border-navy/20 bg-white' }} flex items-center justify-center shrink-0">
-                                @if ($done)
-                                    <svg class="w-5 h-5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
-                                    </svg>
-                                @else
-                                    <svg class="w-5 h-5 text-navy/30 animate-[spin_3s_linear_infinite]" viewBox="0 0 24 24">
-                                        <use href="#roomie-sparkle"/>
-                                    </svg>
-                                @endif
-                            </div>
-                            <div class="flex-1">
-                                <p class="font-[Fredoka] font-bold text-base">Agente {{ $name }}</p>
-                                <p class="text-xs text-navy/50 mt-0.5">{{ $done ? 'Completado' : 'En espera…' }}</p>
-                            </div>
-                            <span class="text-xs font-bold text-navy/30">0{{ $loop->iteration }}</span>
-                        </div>
-                    @endforeach
-                </div>
-            </div>
+        <div class="max-w-md">
+            <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-5">Pipeline</p>
+            <ol class="space-y-1">
+                @foreach (['analysis' => 'Analista', 'strategy' => 'Estratega', 'creative' => 'Creativo', 'audit' => 'Auditor'] as $key => $name)
+                    @php $done = (bool) $campaign->$key; @endphp
+                    <li class="flex items-center gap-3 py-2.5">
+                        <span class="w-5 h-5 flex items-center justify-center shrink-0">
+                            @if ($done)
+                                <svg class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
+                                </svg>
+                            @else
+                                <span class="w-1.5 h-1.5 rounded-full bg-navy/30 animate-pulse"></span>
+                            @endif
+                        </span>
+                        <span class="text-sm {{ $done ? 'text-navy' : 'text-navy/45' }}">{{ $name }}</span>
+                        <span class="text-[11px] text-navy/35 ml-auto">{{ $done ? 'Listo' : 'En espera' }}</span>
+                    </li>
+                @endforeach
+            </ol>
         </div>
 
         @push('scripts')
@@ -98,289 +87,197 @@
     @endif
 
     @if ($campaign->isComplete())
-        {{-- Pipeline step badges --}}
-        <div class="grid grid-cols-4 gap-3 mb-10">
-            @foreach (['analysis' => 'Analista', 'strategy' => 'Estratega', 'creative' => 'Creativo', 'audit' => 'Auditor'] as $key => $name)
-                <div class="relative bg-emerald-50 rounded-2xl border-2 border-emerald-600 p-3 text-center overflow-hidden">
-                    <div class="absolute inset-0 opacity-[0.08] text-emerald-700">
-                        <svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#pat-dots)"/></svg>
-                    </div>
-                    <div class="relative">
-                        <svg class="w-5 h-5 text-emerald-600 mx-auto mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="3">
-                            <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/>
-                        </svg>
-                        <p class="text-[11px] font-[Fredoka] font-bold text-emerald-800">{{ $name }}</p>
-                        <p class="text-[9px] uppercase tracking-widest text-emerald-600/60 mt-0.5">0{{ $loop->iteration }}</p>
-                    </div>
-                </div>
-            @endforeach
-        </div>
-
-        <div class="grid grid-cols-3 gap-6">
-            {{-- Left column: Strategy + Audit --}}
-            <div class="col-span-3 lg:col-span-1 space-y-6">
+        <div class="grid grid-cols-12 gap-x-10 gap-y-12">
+            {{-- Sidebar: estrategia + auditoría --}}
+            <aside class="col-span-12 lg:col-span-4 space-y-12">
                 @if ($strategy = $campaign->strategy)
-                    <div class="relative bg-white rounded-2xl border-2 border-navy p-6 overflow-hidden shadow-[4px_4px_0_0_#1a1a2e]">
-                        <div class="absolute top-0 right-0 w-24 h-24 opacity-[0.06] text-navy">
-                            <svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#pat-plus)"/></svg>
-                        </div>
-                        <div class="relative">
-                            <div class="flex items-center gap-2 mb-5">
-                                <svg class="w-3.5 h-3.5 text-copper" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
-                                <h3 class="font-bold text-xs text-copper uppercase tracking-[0.2em]">Estrategia</h3>
+                    <section>
+                        <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-5">Estrategia</p>
+
+                        <dl class="space-y-6">
+                            <div>
+                                <dt class="text-xs text-navy/45 mb-1">Segmento</dt>
+                                <dd class="font-[Fredoka] font-semibold">{{ $strategy['target_segment']['name'] ?? '—' }}</dd>
+                                <dd class="text-sm text-navy/60 mt-1 leading-relaxed">{{ $strategy['target_segment']['persona'] ?? '' }}</dd>
                             </div>
 
-                            <div class="space-y-5">
+                            <div>
+                                <dt class="text-xs text-navy/45 mb-1">Hotel</dt>
+                                <dd class="font-[Fredoka] font-semibold">{{ $strategy['recommended_hotel']['name'] ?? '—' }}</dd>
+                                <dd class="text-sm text-navy/60">{{ $strategy['recommended_hotel']['city'] ?? '' }}</dd>
+                                <dd class="text-xs text-navy/45 italic mt-2 leading-relaxed">{{ $strategy['recommended_hotel']['why'] ?? '' }}</dd>
+                            </div>
+
+                            <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <p class="text-[10px] uppercase tracking-widest text-navy/40 mb-1">/ segmento</p>
-                                    <p class="font-[Fredoka] font-bold text-lg">{{ $strategy['target_segment']['name'] ?? '—' }}</p>
-                                    <p class="text-sm text-navy/60 mt-1">{{ $strategy['target_segment']['persona'] ?? '' }}</p>
+                                    <dt class="text-xs text-navy/45 mb-1">Canal</dt>
+                                    <dd class="text-sm">{{ $strategy['channel'] ?? '—' }}</dd>
                                 </div>
-
-                                <div class="pt-4 border-t border-navy/10">
-                                    <p class="text-[10px] uppercase tracking-widest text-navy/40 mb-1">/ hotel</p>
-                                    <p class="font-[Fredoka] font-bold text-lg">{{ $strategy['recommended_hotel']['name'] ?? '—' }}</p>
-                                    <p class="text-sm text-navy/60">{{ $strategy['recommended_hotel']['city'] ?? '' }}</p>
-                                    <p class="text-xs text-navy/40 mt-2 italic">{{ $strategy['recommended_hotel']['why'] ?? '' }}</p>
-                                </div>
-
-                                <div class="grid grid-cols-2 gap-3 pt-4 border-t border-navy/10">
-                                    <div>
-                                        <p class="text-[10px] uppercase tracking-widest text-navy/40 mb-1">/ canal</p>
-                                        <p class="font-semibold text-sm">{{ $strategy['channel'] ?? '—' }}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-[10px] uppercase tracking-widest text-navy/40 mb-1">/ timing</p>
-                                        <p class="font-semibold text-sm">{{ $strategy['timing']['best_period'] ?? '—' }}</p>
-                                    </div>
-                                </div>
-
-                                <div class="pt-4 border-t border-navy/10">
-                                    <p class="text-[10px] uppercase tracking-widest text-navy/40 mb-1">/ key message</p>
-                                    <p class="text-sm font-[Fredoka] font-semibold italic">"{{ $strategy['key_message'] ?? '' }}"</p>
-                                </div>
-
                                 <div>
-                                    <p class="text-[10px] uppercase tracking-widest text-navy/40 mb-1">/ tono</p>
-                                    <p class="text-sm">{{ $strategy['tone'] ?? '' }}</p>
+                                    <dt class="text-xs text-navy/45 mb-1">Timing</dt>
+                                    <dd class="text-sm">{{ $strategy['timing']['best_period'] ?? '—' }}</dd>
                                 </div>
                             </div>
-                        </div>
-                    </div>
+
+                            <div>
+                                <dt class="text-xs text-navy/45 mb-1">Mensaje clave</dt>
+                                <dd class="text-sm italic font-[Fredoka] leading-relaxed">"{{ $strategy['key_message'] ?? '' }}"</dd>
+                            </div>
+
+                            <div>
+                                <dt class="text-xs text-navy/45 mb-1">Tono</dt>
+                                <dd class="text-sm">{{ $strategy['tone'] ?? '' }}</dd>
+                            </div>
+                        </dl>
+                    </section>
                 @endif
 
                 @if ($audit = $campaign->audit)
-                    <div class="relative bg-navy text-cream rounded-2xl border-2 border-navy p-6 overflow-hidden shadow-[4px_4px_0_0_#c8956c]">
-                        <div class="absolute inset-0 opacity-[0.08] text-cream">
-                            <svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#pat-diag)"/></svg>
-                        </div>
-                        <div class="relative">
-                            <div class="flex items-center gap-2 mb-5">
-                                <svg class="w-3.5 h-3.5 text-copper" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
-                                <h3 class="font-bold text-xs text-copper uppercase tracking-[0.2em]">Auditoría</h3>
-                            </div>
+                    <section class="border-t border-navy/10 pt-10">
+                        <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-5">Auditoría</p>
+                        <p class="text-sm text-navy/70 leading-relaxed mb-6">{{ $audit['summary'] ?? '' }}</p>
 
-                            <div class="space-y-4">
-                                <p class="text-sm leading-relaxed">{{ $audit['summary'] ?? '' }}</p>
-
-                                <div>
-                                    <p class="text-[10px] uppercase tracking-widest text-copper mb-2">/ coherencia</p>
-                                    @foreach (($audit['coherence_check'] ?? []) as $check => $passed)
-                                        <div class="flex items-center gap-2 text-sm py-0.5">
-                                            @if ($passed)
-                                                <span class="text-emerald-400 font-bold">✓</span>
-                                            @else
-                                                <span class="text-red-400 font-bold">✗</span>
-                                            @endif
-                                            <span class="text-cream/70">{{ str_replace('_', ' ', $check) }}</span>
-                                        </div>
-                                    @endforeach
-                                </div>
-
-                                @if (!empty($audit['strengths']))
-                                    <div>
-                                        <p class="text-[10px] uppercase tracking-widest text-copper mb-1">/ fortalezas</p>
-                                        @foreach ($audit['strengths'] as $s)
-                                            <p class="text-sm text-cream/70 flex gap-2">
-                                                <span class="text-emerald-400">+</span>
-                                                {{ $s }}
-                                            </p>
-                                        @endforeach
+                        @if (!empty($audit['coherence_check']))
+                            <div class="mb-6 space-y-1.5">
+                                @foreach ($audit['coherence_check'] as $check => $passed)
+                                    <div class="flex items-center gap-2 text-xs">
+                                        <span class="{{ $passed ? 'text-emerald-600' : 'text-red-600' }}">{{ $passed ? '✓' : '✕' }}</span>
+                                        <span class="text-navy/55">{{ str_replace('_', ' ', $check) }}</span>
                                     </div>
-                                @endif
-
-                                @if (!empty($audit['improvements']))
-                                    <div>
-                                        <p class="text-[10px] uppercase tracking-widest text-copper mb-1">/ mejoras</p>
-                                        @foreach ($audit['improvements'] as $imp)
-                                            <p class="text-sm text-cream/70 flex gap-2">
-                                                <span class="text-amber-400">−</span>
-                                                {{ $imp }}
-                                            </p>
-                                        @endforeach
-                                    </div>
-                                @endif
-
-                                <div class="pt-3 border-t border-cream/20">
-                                    <span class="inline-flex items-center gap-1.5 text-[10px] uppercase tracking-widest font-bold px-3 py-1.5 rounded-full
-                                        {{ ($audit['final_verdict'] ?? '') === 'aprobada' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' : 'bg-amber-500/20 text-amber-300 border border-amber-500/40' }}">
-                                        <span class="w-1.5 h-1.5 rounded-full {{ ($audit['final_verdict'] ?? '') === 'aprobada' ? 'bg-emerald-400' : 'bg-amber-400' }}"></span>
-                                        {{ $audit['final_verdict'] ?? '—' }}
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                @endif
-            </div>
-
-            {{-- Right column: Email preview --}}
-            <div class="col-span-3 lg:col-span-2">
-                @if ($creative = $campaign->creative)
-                    <div class="relative bg-white rounded-2xl border-2 border-navy overflow-hidden shadow-[6px_6px_0_0_#1a1a2e]">
-                        {{-- Email header bar --}}
-                        <div class="px-6 py-4 border-b-2 border-navy bg-sand-light flex items-center gap-2">
-                            <div class="flex gap-1.5">
-                                <span class="w-2.5 h-2.5 rounded-full bg-red-400 border border-navy/20"></span>
-                                <span class="w-2.5 h-2.5 rounded-full bg-amber-400 border border-navy/20"></span>
-                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 border border-navy/20"></span>
-                            </div>
-                            <span class="text-[10px] uppercase tracking-widest text-navy/50 ml-3">/ email preview</span>
-                        </div>
-
-                        <div class="px-6 py-4 border-b border-sand">
-                            <p class="text-sm mb-1"><span class="text-[10px] uppercase tracking-widest text-navy/40">Asunto &nbsp;</span> <strong class="font-[Fredoka]">{{ $creative['subject_line'] ?? '' }}</strong></p>
-                            <p class="text-sm text-navy/50">{{ $creative['preview_text'] ?? '' }}</p>
-                        </div>
-
-                        <div class="p-6">
-                            <div class="rounded-2xl border-2 border-navy overflow-hidden">
-                                <div class="relative bg-navy text-cream px-6 py-6 overflow-hidden">
-                                    <div class="absolute inset-0 opacity-[0.08] text-cream">
-                                        <svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#pat-stars)"/></svg>
-                                    </div>
-                                    <div class="relative">
-                                        <p class="text-[10px] tracking-[0.25em] uppercase text-copper mb-2 flex items-center gap-2">
-                                            <svg class="w-2.5 h-2.5" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
-                                            {{ $strategy['recommended_hotel']['name'] ?? 'Eurostars' }}
-                                        </p>
-                                        <h2 class="text-2xl font-[Fredoka] font-bold leading-tight">{{ $creative['headline'] ?? '' }}</h2>
-                                    </div>
-                                </div>
-                                <div class="px-6 py-5 text-sm leading-relaxed bg-cream">
-                                    {!! $creative['body_html'] ?? '' !!}
-                                </div>
-                                <div class="px-6 pb-6 pt-2 text-center bg-cream">
-                                    <span class="inline-flex items-center gap-2 bg-copper text-navy px-8 py-3 rounded-xl font-[Fredoka] font-bold text-sm border-2 border-navy shadow-[3px_3px_0_0_#1a1a2e]">
-                                        {{ $creative['cta_text'] ?? 'Reservar ahora' }}
-                                        <svg class="w-3 h-3" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
-                                    </span>
-                                </div>
-                            </div>
-                        </div>
-
-                        @if (!empty($creative['alt_formats']))
-                            <div class="px-6 pb-6 border-t-2 border-navy pt-5">
-                                <p class="text-[10px] uppercase tracking-[0.2em] text-copper font-bold mb-4 flex items-center gap-2">
-                                    <svg class="w-2.5 h-2.5" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
-                                    Formatos alternativos
-                                </p>
-                                <div class="grid grid-cols-1 gap-3">
-                                    @foreach ($creative['alt_formats'] as $format => $text)
-                                        <div class="bg-sand-light rounded-xl border-2 border-navy/15 p-3">
-                                            <p class="text-[10px] uppercase tracking-widest text-navy/40 mb-1">/ {{ str_replace('_', ' ', $format) }}</p>
-                                            <p class="text-sm">{{ $text }}</p>
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endif
-
-                        @if (!empty($creative['visual_direction']))
-                            <div class="px-6 pb-6">
-                                <p class="text-[10px] uppercase tracking-widest text-navy/40 mb-1">/ dirección visual</p>
-                                <p class="text-sm text-navy/60 italic">{{ $creative['visual_direction'] }}</p>
-                            </div>
-                        @endif
-                    </div>
-                @endif
-            </div>
-        </div>
-
-        {{-- Analysis section --}}
-        @if ($analysis = $campaign->analysis)
-            <div class="mt-10 relative bg-white rounded-2xl border-2 border-navy p-6 overflow-hidden shadow-[6px_6px_0_0_#1a1a2e]">
-                <div class="absolute inset-0 opacity-[0.04] text-navy">
-                    <svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#pat-grid)"/></svg>
-                </div>
-                <div class="relative">
-                    <div class="flex items-center gap-2 mb-6">
-                        <svg class="w-3.5 h-3.5 text-copper" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
-                        <h3 class="font-bold text-xs text-copper uppercase tracking-[0.2em]">Análisis de datos</h3>
-                    </div>
-
-                    @if (!empty($analysis['segments']))
-                        <div class="grid grid-cols-2 gap-4 mb-6">
-                            @foreach ($analysis['segments'] as $segment)
-                                @php $isFocus = ($segment['name'] ?? '') === ($analysis['recommended_focus_segment'] ?? ''); @endphp
-                                <div class="relative rounded-2xl border-2 p-4 overflow-hidden
-                                    {{ $isFocus ? 'border-copper bg-copper/5 shadow-[3px_3px_0_0_#c8956c]' : 'border-navy/20 bg-sand-light/40' }}">
-                                    <div class="flex items-start justify-between">
-                                        <p class="font-[Fredoka] font-bold text-sm">{{ $segment['name'] ?? '' }}</p>
-                                        @if ($isFocus)
-                                            <span class="inline-flex items-center gap-1 text-[9px] uppercase tracking-widest bg-navy text-copper px-2 py-0.5 rounded-full font-bold">
-                                                <svg class="w-2 h-2" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
-                                                Foco
-                                            </span>
-                                        @endif
-                                    </div>
-                                    <p class="text-xs text-navy/50 mt-1 leading-relaxed">{{ $segment['description'] ?? '' }}</p>
-                                    <div class="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-navy/10 text-center">
-                                        <div>
-                                            <p class="text-base font-[Fredoka] font-bold">{{ $segment['size'] ?? '—' }}</p>
-                                            <p class="text-[9px] uppercase tracking-widest text-navy/40">clientes</p>
-                                        </div>
-                                        <div>
-                                            <p class="text-base font-[Fredoka] font-bold">{{ isset($segment['avg_adr']) ? number_format($segment['avg_adr'], 0) . '€' : '—' }}</p>
-                                            <p class="text-[9px] uppercase tracking-widest text-navy/40">ADR</p>
-                                        </div>
-                                        <div>
-                                            <p class="text-[11px] font-semibold truncate">{{ implode(', ', $segment['preferred_destinations'] ?? []) }}</p>
-                                            <p class="text-[9px] uppercase tracking-widest text-navy/40">destinos</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            @endforeach
-                        </div>
-                    @endif
-
-                    @if (!empty($analysis['market_insights']))
-                        <div>
-                            <p class="text-[10px] uppercase tracking-widest text-navy/40 mb-2">/ market insights</p>
-                            <div class="flex flex-wrap gap-2">
-                                @foreach ($analysis['market_insights'] as $insight)
-                                    <span class="inline-flex items-center gap-1.5 text-xs bg-sand-light border-2 border-navy/20 px-3 py-1.5 rounded-xl">
-                                        <svg class="w-2.5 h-2.5 text-copper" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
-                                        {{ $insight }}
-                                    </span>
                                 @endforeach
                             </div>
+                        @endif
+
+                        @if (!empty($audit['strengths']))
+                            <div class="mb-5">
+                                <p class="text-xs text-navy/45 mb-1.5">Fortalezas</p>
+                                @foreach ($audit['strengths'] as $s)
+                                    <p class="text-xs text-navy/65 leading-relaxed">+ {{ $s }}</p>
+                                @endforeach
+                            </div>
+                        @endif
+
+                        @if (!empty($audit['improvements']))
+                            <div>
+                                <p class="text-xs text-navy/45 mb-1.5">Mejoras</p>
+                                @foreach ($audit['improvements'] as $imp)
+                                    <p class="text-xs text-navy/65 leading-relaxed">− {{ $imp }}</p>
+                                @endforeach
+                            </div>
+                        @endif
+                    </section>
+                @endif
+            </aside>
+
+            {{-- Main: email preview --}}
+            <main class="col-span-12 lg:col-span-8">
+                @if ($creative = $campaign->creative)
+                    <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-5">Email</p>
+
+                    <div class="bg-white border border-navy/15 rounded-2xl overflow-hidden">
+                        <div class="px-7 py-5 border-b border-navy/10">
+                            <p class="text-xs text-navy/45 mb-1">Asunto</p>
+                            <p class="font-[Fredoka] font-semibold text-lg leading-tight">{{ $creative['subject_line'] ?? '' }}</p>
+                            <p class="text-sm text-navy/55 mt-2">{{ $creative['preview_text'] ?? '' }}</p>
                         </div>
+
+                        <div class="bg-navy text-cream px-8 py-8">
+                            <p class="text-[11px] tracking-[0.18em] uppercase text-copper mb-3">{{ $strategy['recommended_hotel']['name'] ?? 'Eurostars' }}</p>
+                            <h2 class="font-[Fredoka] font-semibold text-2xl md:text-3xl leading-tight">{{ $creative['headline'] ?? '' }}</h2>
+                        </div>
+
+                        <div class="px-8 py-7 text-sm leading-relaxed text-navy/80">
+                            {!! $creative['body_html'] ?? '' !!}
+                        </div>
+
+                        <div class="px-8 pb-8 text-center">
+                            <span class="inline-block bg-copper text-navy px-7 py-2.5 rounded-full text-sm font-medium">
+                                {{ $creative['cta_text'] ?? 'Reservar ahora' }}
+                            </span>
+                        </div>
+                    </div>
+
+                    @if (!empty($creative['alt_formats']))
+                        <section class="mt-12">
+                            <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-5">Otras versiones</p>
+                            <div class="space-y-5">
+                                @foreach ($creative['alt_formats'] as $format => $text)
+                                    <div>
+                                        <p class="text-xs text-navy/45 mb-1">{{ str_replace('_', ' ', $format) }}</p>
+                                        <p class="text-sm text-navy/75 leading-relaxed">{{ $text }}</p>
+                                    </div>
+                                @endforeach
+                            </div>
+                        </section>
                     @endif
-                </div>
-            </div>
+
+                    @if (!empty($creative['visual_direction']))
+                        <section class="mt-9">
+                            <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-2">Dirección visual</p>
+                            <p class="text-sm text-navy/65 italic leading-relaxed">{{ $creative['visual_direction'] }}</p>
+                        </section>
+                    @endif
+                @endif
+            </main>
+        </div>
+
+        {{-- Análisis --}}
+        @if ($analysis = $campaign->analysis)
+            <section class="mt-20 pt-12 border-t border-navy/15">
+                <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-7">Análisis</p>
+
+                @if (!empty($analysis['segments']))
+                    <div class="grid md:grid-cols-2 gap-x-10 gap-y-9 mb-12">
+                        @foreach ($analysis['segments'] as $segment)
+                            @php $isFocus = ($segment['name'] ?? '') === ($analysis['recommended_focus_segment'] ?? ''); @endphp
+                            <div>
+                                <div class="flex items-baseline gap-3 mb-1.5">
+                                    <h4 class="font-[Fredoka] font-semibold text-lg">{{ $segment['name'] ?? '' }}</h4>
+                                    @if ($isFocus)
+                                        <span class="text-[10px] uppercase tracking-wider text-copper font-medium">foco</span>
+                                    @endif
+                                </div>
+                                <p class="text-sm text-navy/60 leading-relaxed mb-4">{{ $segment['description'] ?? '' }}</p>
+                                <dl class="flex gap-7 text-xs">
+                                    <div>
+                                        <dt class="text-navy/45">Clientes</dt>
+                                        <dd class="font-[Fredoka] font-semibold text-base mt-0.5">{{ $segment['size'] ?? '—' }}</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-navy/45">ADR</dt>
+                                        <dd class="font-[Fredoka] font-semibold text-base mt-0.5">{{ isset($segment['avg_adr']) ? number_format($segment['avg_adr'], 0) . '€' : '—' }}</dd>
+                                    </div>
+                                    <div class="min-w-0">
+                                        <dt class="text-navy/45">Destinos</dt>
+                                        <dd class="text-xs mt-0.5 truncate">{{ implode(', ', $segment['preferred_destinations'] ?? []) }}</dd>
+                                    </div>
+                                </dl>
+                            </div>
+                        @endforeach
+                    </div>
+                @endif
+
+                @if (!empty($analysis['market_insights']))
+                    <div>
+                        <p class="text-xs text-navy/45 mb-3">Market insights</p>
+                        <ul class="space-y-2">
+                            @foreach ($analysis['market_insights'] as $insight)
+                                <li class="flex items-start gap-2.5 text-sm text-navy/70 leading-relaxed">
+                                    <span class="text-copper mt-1.5 shrink-0">·</span>
+                                    {{ $insight }}
+                                </li>
+                            @endforeach
+                        </ul>
+                    </div>
+                @endif
+            </section>
         @endif
     @endif
 
     @if ($campaign->isFailed())
-        <div class="relative bg-red-50 border-2 border-red-600 rounded-2xl p-8 text-center shadow-[6px_6px_0_0_#dc2626] overflow-hidden">
-            <div class="absolute inset-0 opacity-[0.05] text-red-600">
-                <svg width="100%" height="100%"><rect width="100%" height="100%" fill="url(#pat-diag)"/></svg>
-            </div>
-            <div class="relative">
-                <p class="text-2xl font-[Fredoka] font-bold text-red-700">El pipeline ha fallado</p>
-                <p class="text-sm text-red-500 mt-1">Revisa los logs o intenta crear una nueva campaña.</p>
-            </div>
+        <div class="border-l-2 border-red-500 pl-4 py-2">
+            <p class="font-medium text-red-700">El pipeline ha fallado</p>
+            <p class="text-sm text-red-500/80 mt-1">Revisa los logs o crea una nueva campaña.</p>
         </div>
     @endif
 </x-layouts.app>
