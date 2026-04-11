@@ -154,43 +154,136 @@ class CampaignPipeline
     {
         $strategyJson = json_encode($strategy, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         $intensity = $this->intensityGuidance();
+        $designGuide = $this->creativeDesignGuide();
+        $hotelName = $strategy['recommended_hotel']['name'] ?? 'el hotel destacado';
+        $hotelCity = $strategy['recommended_hotel']['city'] ?? '';
+        $tone = $strategy['tone'] ?? '';
+        $keyMessage = $strategy['key_message'] ?? '';
 
         $prompt = <<<PROMPT
-        Eres el Agente Creativo de campañas de marketing hotelero para Eurostars Hotel Company.
+        Eres el Agente Creativo de Roomie. Escribes emails editoriales para Eurostars Hotel Company que un diseñador senior publicaría sin tocarlos.
 
         OBJETIVO DE NEGOCIO: {$objective}
 
         ESTRATEGIA:
         {$strategyJson}
 
+        Tono: {$tone}
+        Mensaje clave (debe aparecer literalmente en el body): {$keyMessage}
+        Hotel destacado: {$hotelName} en {$hotelCity}
+
         {$intensity}
 
-        Genera el contenido creativo de la campaña. Responde en JSON con esta estructura exacta:
+        {$designGuide}
+
+        Responde en JSON con esta estructura EXACTA:
         {
-            "subject_line": "asunto del email",
-            "preview_text": "texto de preview del email (max 90 chars)",
-            "headline": "titulo principal del email",
-            "body_html": "contenido HTML del cuerpo del email con estilos inline, diseño profesional hotelero, maximo 300 palabras. Usa colores elegantes (#1a1a2e, #e2d1c3, #16213e). Incluye un CTA claro.",
-            "cta_text": "texto del boton CTA",
+            "subject_line": "asunto del email (max 60 chars, concreto, evocativo, sin 'RE:' falsos ni ALL CAPS salvo UNA palabra)",
+            "preview_text": "preview (max 90 chars) que complementa el asunto sin repetirlo",
+            "headline": "titular editorial de 5-9 palabras sin puntuación final — aparece en un hero navy de 36px",
+            "body_html": "HTML del cuerpo siguiendo las DIRECTRICES DE DISEÑO de arriba. Solo inline styles. ~300 palabras.",
+            "cta_text": "texto del botón (2-4 palabras, verbo de acción específico — NO 'Click aquí', NO 'Más info')",
             "cta_url_slug": "slug para la URL de destino",
             "alt_formats": {
                 "push_notification": "texto de push (max 100 chars)",
                 "sms": "texto de SMS (max 160 chars)",
                 "social_caption": "caption para redes sociales"
             },
-            "visual_direction": "descripcion de la direccion visual/fotografica sugerida"
+            "visual_direction": "direccion visual/fotografica que acompañaria este email en un brief de diseño real"
         }
 
-        El tono debe ser: {$strategy['tone']}
-        El mensaje clave es: {$strategy['key_message']}
-        Hotel destacado: {$strategy['recommended_hotel']['name']} en {$strategy['recommended_hotel']['city']}
+        IMPORTANTE: adapta subject_line, headline, body_html y cta_text a los niveles de intensidad indicados. Si agresividad/manipulación son altas (4-5), el copy debe oler a urgencia, escasez numérica y FOMO concreto. Si son bajas (0-1), el copy es puramente editorial/informativo.
 
-        IMPORTANTE: Adapta el subject_line, el headline, el body_html y el cta_text a los niveles de intensidad indicados arriba. Si agresividad o manipulación son altas (4-5), usa técnicas visibles (urgencia temporal explícita, escasez numérica concreta, FOMO, social proof directo). Si son bajas (0-1), el copy debe ser puramente informativo y descriptivo.
-
-        Responde SOLO el JSON, sin markdown ni explicaciones. El body_html debe ser HTML valido con estilos inline.
+        Responde SOLO el JSON, sin markdown ni explicaciones. El body_html debe ser HTML válido con los estilos inline EXACTOS indicados en las directrices.
         PROMPT;
 
         return $this->client->complete($prompt, 'creative');
+    }
+
+    /**
+     * Shared design rules for the Creativo agent. Used by both the initial
+     * creative prompt, the follow-up regeneration prompt, and the interactive
+     * refinement prompt — so all three produce `body_html` that slots into
+     * the same outer email shell.
+     */
+    private function creativeDesignGuide(): string
+    {
+        return <<<'GUIDE'
+        DIRECTRICES DE DISEÑO DEL EMAIL (críticas para la calidad visual final):
+
+        CONTEXTO DEL SHELL (lo que tú NO tienes que escribir):
+        El `body_html` que generas se inserta dentro de una card editorial de 640px con este layout fijo:
+        - Un hero navy con un brand mark en courier + tu `headline` en Georgia 36px
+        - Tu `body_html` (lo que escribes ahora)
+        - Un divider decorativo "— ✦ —" en copper
+        - Un botón CTA en copper con tu `cta_text` + flecha
+        - Un footer con la dirección física y el link de unsubscribe
+
+        Por tanto: NO repitas el hotel, el titular ni un CTA dentro del body_html. Tu body_html es el cuerpo editorial entre la cabecera y el botón.
+
+        TIPOGRAFÍA Y COLORES PERMITIDOS:
+        - Fuente principal: Georgia, 'Times New Roman', serif. NO uses Inter, Fredoka ni fuentes custom (los clientes de email no las cargan).
+        - Fuente mono (para captions pequeños): 'Courier New', Courier, monospace.
+        - Colores:
+          · #1a1a2e (navy — texto principal, headlines)
+          · #1a1a2eb3 (navy 70% — texto de body)
+          · #1a1a2e66 (navy 40% — captions, metadatos)
+          · #c8956c (copper — único accent permitido, usar con moderación)
+          · #e2d1c3 (sand — dividers/separadores)
+        - Nada fuera de esta paleta. Nada de degradados. Nada de sombras.
+
+        REGLAS DE EMAIL CLIENT:
+        - SIEMPRE inline styles. NUNCA <style> tags.
+        - NO imágenes (no tenemos assets).
+        - NO JavaScript.
+        - NO SVG inline (Outlook no lo renderiza).
+        - Usa `&mdash;` para em-dash, `&nbsp;` donde quieras evitar wrap.
+        - Para sparkles decorativos usa el char Unicode `&#10022;` (✦).
+        - No uses emojis.
+        - Margin-bottom en párrafos, NO margin-top (algunos clientes los colapsan).
+
+        ESTRUCTURA EDITORIAL RECOMENDADA (250-400 palabras):
+
+        1. Párrafo lead (20px, primera línea memorable):
+        <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:20px;line-height:1.5;color:#1a1a2e;">Primera frase potente con una imagen concreta.</p>
+
+        2. 2-3 párrafos de body (17px, con breathing room):
+        <p style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.7;color:#1a1a2eb3;">Párrafo con sustancia — nombres propios, horas, sensaciones, números concretos.</p>
+
+        3. OPCIONAL (uno solo, para una frase memorable): pull-quote editorial
+        <blockquote style="margin:32px 0;padding:4px 0 4px 24px;border-left:2px solid #c8956c;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:22px;line-height:1.4;color:#1a1a2e;">"La frase clave entre comillas."</blockquote>
+
+        4. OPCIONAL (en vez del pull-quote): lista editorial de 3 highlights
+        <table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin:24px 0;">
+            <tr><td style="padding:0 0 12px 0;font-family:Georgia,serif;font-size:17px;line-height:1.6;color:#1a1a2eb3;"><span style="color:#c8956c;">&mdash;&nbsp;</span>Primer highlight concreto.</td></tr>
+            <tr><td style="padding:0 0 12px 0;font-family:Georgia,serif;font-size:17px;line-height:1.6;color:#1a1a2eb3;"><span style="color:#c8956c;">&mdash;&nbsp;</span>Segundo highlight con un número.</td></tr>
+            <tr><td style="padding:0;font-family:Georgia,serif;font-size:17px;line-height:1.6;color:#1a1a2eb3;"><span style="color:#c8956c;">&mdash;&nbsp;</span>Tercero que lleva hacia el CTA.</td></tr>
+        </table>
+
+        5. OPCIONAL: small-caps caption antes de una sección (para darle ritmo editorial)
+        <p style="margin:24px 0 8px;font-family:'Courier New',Courier,monospace;font-size:11px;text-transform:uppercase;letter-spacing:2px;color:#1a1a2e66;">Sección</p>
+
+        6. Frase puente final que lleva al CTA sin repetirlo literalmente:
+        <p style="margin:0 0 4px;font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.7;color:#1a1a2eb3;">Una frase de cierre que prepara el click sin decir 'haz click'.</p>
+
+        7. Sign-off (al final del todo, siempre):
+        <p style="margin:28px 0 0;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:15px;color:#1a1a2e66;">&mdash; El equipo del {nombre del hotel}</p>
+
+        PRINCIPIOS DE CONTENIDO:
+        - Imagen mental concreta por párrafo: atardecer, patio, copa, rooftop, sierra con nieve, ruta empedrada. NUNCA generalidades.
+        - Nombres propios reales: usa el nombre del hotel, la ciudad, platos, calles, barrios, horas exactas.
+        - NO clichés: prohibido "Descubre el encanto de...", "Una experiencia única", "Sumérgete en...".
+        - El lector debe VER el viaje antes de hacer click.
+        - El `key_message` del strategist debe aparecer textualmente en algún punto del body.
+        - Un pull-quote o una lista — NO ambos. Rompería el ritmo.
+
+        EJEMPLO de body_html COMPLETO bien hecho (referencia de calidad):
+        <p style="margin:0 0 24px;font-family:Georgia,'Times New Roman',serif;font-size:20px;line-height:1.5;color:#1a1a2e;">En junio Granada vuelve a ser nuestra. Menos multitudes, menos colas, más silencio en las calles empedradas del Albaicín.</p>
+        <p style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.7;color:#1a1a2eb3;">Desde el &Aacute;urea Catedral caminas tres minutos hasta la Alhambra. Diez hasta la plaza Nueva. Y desde el rooftop ves la Sierra Nevada todav&iacute;a con nieve mientras cenas ensalada de remolacha y pulpo a la brasa.</p>
+        <blockquote style="margin:32px 0;padding:4px 0 4px 24px;border-left:2px solid #c8956c;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:22px;line-height:1.4;color:#1a1a2e;">"Los atardeceres m&aacute;s lentos del verano."</blockquote>
+        <p style="margin:0 0 20px;font-family:Georgia,'Times New Roman',serif;font-size:17px;line-height:1.7;color:#1a1a2eb3;">Junio es la &uacute;nica ventana del a&ntilde;o con temperaturas perfectas, todas las terrazas abiertas, y precios que bajan un 30% respecto a julio. Dura tres semanas.</p>
+        <p style="margin:28px 0 0;font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:15px;color:#1a1a2e66;">&mdash; El equipo del &Aacute;urea Catedral</p>
+        GUIDE;
     }
 
     private function runAuditor(string $objective, array $strategy, array $creative): array
@@ -270,6 +363,7 @@ class CampaignPipeline
         $strategy = $campaign->strategy ?? [];
         $strategyJson = json_encode($strategy, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         $intensity = $this->intensityGuidance();
+        $designGuide = $this->creativeDesignGuide();
 
         $previousSubjects = [];
         if (! empty($campaign->creative['subject_line'] ?? null)) {
@@ -302,33 +396,76 @@ class CampaignPipeline
 
         {$intensity}
 
+        {$designGuide}
+
         REGLAS DEL SEGUIMIENTO:
         - Reconoce implícitamente que ya se contactó ("Te escribimos de nuevo", "Sigue disponible...").
         - Este es el intento #{$attempt}, la urgencia y la presión DEBEN subir un escalón claro respecto al intento anterior.
-        - Si el intento es 4 o 5, introduce exclusividad explícita o "última oportunidad".
+        - Si el intento es 4 o 5, introduce exclusividad explícita o "última oportunidad" en el body.
         - Mantén el mismo hotel destacado ({$hotelName}, {$hotelCity}) y la misma promesa de valor.
         - No repitas el subject_line ni el headline de intentos anteriores.
 
-        Genera el contenido creativo. Responde en JSON con esta estructura EXACTA (misma que el creativo original):
-        {
-            "subject_line": "asunto del email",
-            "preview_text": "texto de preview (max 90 chars)",
-            "headline": "titulo principal del email",
-            "body_html": "contenido HTML del cuerpo del email con estilos inline, max 300 palabras, colores #1a1a2e y #c8956c. Incluye un CTA claro.",
-            "cta_text": "texto del boton CTA",
-            "cta_url_slug": "slug para la URL de destino",
-            "alt_formats": {
-                "push_notification": "texto de push (max 100 chars)",
-                "sms": "texto de SMS (max 160 chars)",
-                "social_caption": "caption para redes sociales"
-            },
-            "visual_direction": "descripcion de la direccion visual sugerida"
-        }
+        Responde en JSON con la misma estructura EXACTA que el creativo original (subject_line, preview_text, headline, body_html, cta_text, cta_url_slug, alt_formats, visual_direction). El body_html sigue las DIRECTRICES DE DISEÑO de arriba al pie de la letra.
 
-        Responde SOLO el JSON, sin markdown ni explicaciones. El body_html debe ser HTML valido con estilos inline.
+        Responde SOLO el JSON, sin markdown ni explicaciones.
         PROMPT;
 
         return $this->client->complete($prompt, 'creative-followup');
+    }
+
+    /**
+     * Regenerate the creative in response to a free-form refinement prompt
+     * from the user. The LLM receives the full campaign context (objective,
+     * strategy, current creative) plus the user's instruction, and returns
+     * a new creative JSON with only the requested changes applied.
+     *
+     * @return array<string, mixed>
+     */
+    public function refineCreative(Campaign $campaign, string $refinementPrompt): array
+    {
+        $this->aggressiveness = (int) ($campaign->aggressiveness ?? 2);
+        $this->manipulation = (int) ($campaign->manipulation ?? 2);
+
+        $strategy = $campaign->strategy ?? [];
+        $currentCreative = $campaign->creative ?? [];
+        $strategyJson = json_encode($strategy, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $creativeJson = json_encode($currentCreative, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $intensity = $this->intensityGuidance();
+        $designGuide = $this->creativeDesignGuide();
+        $objective = $campaign->objective;
+        $safePrompt = trim($refinementPrompt);
+
+        $prompt = <<<PROMPT
+        Eres el Agente Creativo de Roomie. El usuario ya tiene un email generado y te pide un AJUSTE concreto. Tu tarea es aplicar ese ajuste respetando todo el contexto original de la campaña.
+
+        OBJETIVO DE NEGOCIO: {$objective}
+
+        ESTRATEGIA ORIGINAL:
+        {$strategyJson}
+
+        CREATIVE ACTUAL (el que el usuario ya ve en la página):
+        {$creativeJson}
+
+        INSTRUCCIÓN DEL USUARIO (aplica solo esto, preservando todo lo demás):
+        """
+        {$safePrompt}
+        """
+
+        {$intensity}
+
+        {$designGuide}
+
+        REGLAS DEL AJUSTE:
+        - Aplica la instrucción del usuario literalmente. Si pide "asunto más corto", acorta SOLO el asunto. Si pide "añade un pull-quote sobre el atardecer", añade ese pull-quote sin tocar el resto.
+        - TODO lo que el usuario NO ha mencionado debe quedarse igual o muy parecido. No reescribas el email entero sin razón.
+        - Mantén el mismo hotel, la misma ciudad, la misma promesa de valor, el mismo key_message, a menos que el usuario pida cambiarlos explícitamente.
+        - Sigue las DIRECTRICES DE DISEÑO del body_html al pie de la letra — el resultado debe seguir siendo email-safe con inline styles y los patrones visuales permitidos.
+        - Si el ajuste del usuario entra en conflicto con las directrices (p.ej. "usa color verde" cuando verde no está en la paleta), prioriza las directrices y explica brevemente por qué en el campo `visual_direction`.
+
+        Responde SOLO con el JSON completo del creative actualizado (subject_line, preview_text, headline, body_html, cta_text, cta_url_slug, alt_formats, visual_direction). Nada de markdown, nada de explicaciones fuera del JSON.
+        PROMPT;
+
+        return $this->client->complete($prompt, 'creative-refine');
     }
 
     private function intensityGuidance(): string

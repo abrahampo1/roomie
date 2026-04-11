@@ -9,9 +9,11 @@ use App\Http\Resources\CampaignStatsResource;
 use App\Jobs\RunCampaignPipeline;
 use App\Models\Campaign;
 use App\Models\CampaignRecipient;
+use App\Services\Campaign\CampaignPipeline;
 use App\Services\Email\CampaignSender;
 use App\Services\Email\RecipientSelector;
 use App\Services\LLM\LlmClientFactory;
+use App\Services\MarketIntelligence\MarketIntelligenceService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -202,6 +204,49 @@ class CampaignApiController extends Controller
             'dispatched' => $created,
             'total_queued' => $campaign->recipients()->count(),
         ]);
+    }
+
+    /**
+     * Apply a free-form refinement prompt to the current creative. The LLM
+     * reads the full campaign context (objective, strategy, current creative)
+     * plus the user's instruction and returns an updated creative JSON.
+     * Requires the campaign to still have a retained API key.
+     */
+    public function refineCreative(Request $request, Campaign $campaign): CampaignResource
+    {
+        $this->authorizeCampaign($campaign);
+
+        if (! $campaign->isComplete()) {
+            abort(response()->json([
+                'error' => 'campaign_not_ready',
+                'message' => 'The campaign pipeline has not completed yet.',
+            ], 422));
+        }
+
+        $validated = $request->validate([
+            'refinement_prompt' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+
+        if ($campaign->getRawOriginal('api_key') === null) {
+            abort(response()->json([
+                'error' => 'key_not_available',
+                'message' => 'The campaign has no stored API key, so the creative cannot be refined.',
+            ], 422));
+        }
+
+        $client = LlmClientFactory::make(
+            $campaign->api_provider,
+            $campaign->api_key,
+            $campaign->api_base_url,
+            $campaign->api_model,
+        );
+
+        $pipeline = new CampaignPipeline($client, new MarketIntelligenceService());
+        $newCreative = $pipeline->refineCreative($campaign, $validated['refinement_prompt']);
+
+        $campaign->update(['creative' => $newCreative]);
+
+        return new CampaignResource($campaign->fresh());
     }
 
     /**

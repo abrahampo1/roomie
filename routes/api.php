@@ -47,6 +47,8 @@ Route::prefix('v1')->group(function () {
         Route::middleware('throttle:20,1')->group(function () {
             Route::post('campaigns', [CampaignApiController::class, 'store'])
                 ->name('api.v1.campaigns.store');
+            Route::post('campaigns/{campaign}/refine-creative', [CampaignApiController::class, 'refineCreative'])
+                ->name('api.v1.campaigns.refine-creative');
             Route::post('campaigns/{campaign}/send', [CampaignApiController::class, 'send'])
                 ->name('api.v1.campaigns.send');
             Route::post('campaigns/{campaign}/stop-followups', [CampaignApiController::class, 'stopFollowups'])

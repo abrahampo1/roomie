@@ -20,6 +20,7 @@
                 <a href="#campaigns-create" class="block py-1 text-navy/65 hover:text-navy transition">POST /campaigns</a>
                 <a href="#campaigns-show" class="block py-1 text-navy/65 hover:text-navy transition">GET /campaigns/:id</a>
                 <a href="#campaigns-status" class="block py-1 text-navy/65 hover:text-navy transition">GET /campaigns/:id/status</a>
+                <a href="#campaigns-refine" class="block py-1 text-navy/65 hover:text-navy transition">POST /campaigns/:id/refine-creative</a>
                 <a href="#campaigns-send" class="block py-1 text-navy/65 hover:text-navy transition">POST /campaigns/:id/send</a>
                 <a href="#campaigns-stop" class="block py-1 text-navy/65 hover:text-navy transition">POST /campaigns/:id/stop-followups</a>
                 <a href="#campaigns-stats" class="block py-1 text-navy/65 hover:text-navy transition">GET /campaigns/:id/stats</a>
@@ -264,6 +265,39 @@ curl $BASE/campaigns/$CAMPAIGN_ID/stats \
     "strategy_preview": { "hotel_name": "Aurea Catedral", "channel": "email", "segment": "Parejas internacionales" },
     "creative_preview": null,
     "audit_preview": null
+}</pre>
+            </section>
+
+            {{-- ═══ POST /campaigns/:id/refine-creative ═══ --}}
+            <section id="campaigns-refine" class="mb-14 scroll-mt-24">
+                <div class="flex items-baseline gap-3 mb-3 flex-wrap">
+                    <span class="font-mono text-[10px] text-copper bg-copper/10 border border-copper/30 px-2 py-0.5 rounded uppercase tracking-wider font-bold">POST</span>
+                    <code class="font-mono text-sm sm:text-base font-medium">/campaigns/:id/refine-creative</code>
+                </div>
+                <p class="text-navy/65 leading-relaxed mb-4 max-w-2xl text-[15px]">
+                    Aplica un ajuste en lenguaje natural al creative actual. La IA lee el objetivo, la estrategia y el creative vigente y devuelve un creative actualizado que solo toca lo que le pediste. Requiere que la campaña todavía tenga su clave API retenida — si ha sido borrada, devuelve <code class="font-mono text-xs bg-navy/5 px-1 py-0.5 rounded">key_not_available</code>.
+                </p>
+                <div class="mb-4">
+                    <p class="text-[10px] uppercase tracking-widest text-navy/40 font-mono mb-2">Body</p>
+                    <table class="text-sm text-navy/70 w-full max-w-2xl">
+                        <tr class="border-b border-navy/10">
+                            <td class="py-2 pr-4 font-mono text-xs w-48"><code>refinement_prompt</code></td>
+                            <td class="py-2">String 5–500 chars. Ejemplos: <em>"asunto más corto"</em>, <em>"añade un pull-quote sobre el atardecer"</em>, <em>"suaviza el tono del último párrafo"</em>.</td>
+                        </tr>
+                    </table>
+                </div>
+                <pre class="font-mono text-xs bg-navy text-cream p-4 rounded-xl overflow-x-auto">// Response 200 — el Campaign completo con el creative actualizado
+{
+    "data": {
+        "id": 42,
+        "creative": {
+            "subject_line": "Granada, ahora.",
+            "headline": "Los atardeceres más lentos del verano",
+            "body_html": "...",
+            ...
+        },
+        ...
+    }
 }</pre>
             </section>
 

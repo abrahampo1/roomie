@@ -459,6 +459,43 @@
                             <p class="text-sm text-navy/65 italic leading-relaxed">{{ $creative['visual_direction'] }}</p>
                         </section>
                     @endif
+
+                    {{-- Refinement prompt — iterate on the creative with free-form instructions --}}
+                    @if ($campaign->getRawOriginal('api_key') !== null)
+                        <section class="mt-10 pt-8 border-t border-navy/10">
+                            <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-2">Afinar el diseño</p>
+                            <p class="text-sm text-navy/60 leading-relaxed mb-4 max-w-xl">
+                                Dile a la IA qué cambiar — tono, longitud, un detalle concreto — y lo reescribirá respetando todo el contexto de la campaña.
+                            </p>
+                            <form method="POST" action="{{ route('campaigns.refine-creative', $campaign) }}" class="space-y-3">
+                                @csrf
+                                <textarea
+                                    name="refinement_prompt"
+                                    rows="3"
+                                    required
+                                    minlength="5"
+                                    maxlength="500"
+                                    autocapitalize="sentences"
+                                    class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 text-base text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition resize-y leading-relaxed"
+                                    placeholder="Ej: añade un pull-quote sobre el atardecer. O: haz el asunto más corto. O: suaviza el tono del último párrafo."
+                                ></textarea>
+                                <div class="flex flex-wrap gap-2 text-xs text-navy/50">
+                                    <button type="button" onclick="this.closest('form').querySelector('textarea').value='Haz el asunto más corto y directo.'" class="px-3 py-1.5 rounded-full border border-navy/15 hover:bg-navy/[0.03] transition">asunto más corto</button>
+                                    <button type="button" onclick="this.closest('form').querySelector('textarea').value='Añade un pull-quote editorial con la frase más memorable.'" class="px-3 py-1.5 rounded-full border border-navy/15 hover:bg-navy/[0.03] transition">añadir pull-quote</button>
+                                    <button type="button" onclick="this.closest('form').querySelector('textarea').value='Sustituye un párrafo por una lista de 3 highlights concretos.'" class="px-3 py-1.5 rounded-full border border-navy/15 hover:bg-navy/[0.03] transition">lista de highlights</button>
+                                    <button type="button" onclick="this.closest('form').querySelector('textarea').value='Suaviza el tono: menos urgencia, más editorial.'" class="px-3 py-1.5 rounded-full border border-navy/15 hover:bg-navy/[0.03] transition">suavizar tono</button>
+                                </div>
+                                <button type="submit" class="inline-flex items-center gap-2 bg-navy text-cream pl-5 pr-4 py-2.5 rounded-full text-sm font-medium hover:bg-navy-light transition">
+                                    Aplicar cambios
+                                    <svg class="w-3 h-3 text-copper" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
+                                </button>
+                            </form>
+                        </section>
+                    @else
+                        <section class="mt-10 pt-8 border-t border-navy/10">
+                            <p class="text-xs text-navy/45 italic">La clave API de esta campaña ya se ha borrado. No se puede refinar el creative.</p>
+                        </section>
+                    @endif
                 @endif
             </main>
         </div>

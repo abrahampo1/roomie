@@ -6,8 +6,11 @@ use App\Jobs\RunCampaignPipeline;
 use App\Models\Campaign;
 use App\Models\Customer;
 use App\Models\Hotel;
+use App\Services\Campaign\CampaignPipeline;
 use App\Services\Email\CampaignStatsService;
 use App\Services\LLM\LlmClientFactory;
+use App\Services\MarketIntelligence\MarketIntelligenceService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
@@ -65,6 +68,44 @@ class CampaignController extends Controller
 
         return redirect()->route('campaigns.show', $campaign)
             ->with('message', 'Campaña en proceso. Los 4 agentes están trabajando...');
+    }
+
+    public function refineCreative(Request $request, Campaign $campaign): RedirectResponse
+    {
+        abort_unless($campaign->user_id === auth()->id(), 403);
+        abort_unless($campaign->isComplete(), 422, 'El pipeline todavía no ha terminado.');
+
+        $validated = $request->validate([
+            'refinement_prompt' => ['required', 'string', 'min:5', 'max:500'],
+        ]);
+
+        if ($campaign->getRawOriginal('api_key') === null) {
+            return redirect()
+                ->route('campaigns.show', $campaign)
+                ->with('message', 'La clave API de la campaña ya ha sido borrada. No se puede refinar.');
+        }
+
+        try {
+            $client = LlmClientFactory::make(
+                $campaign->api_provider,
+                $campaign->api_key,
+                $campaign->api_base_url,
+                $campaign->api_model,
+            );
+
+            $pipeline = new CampaignPipeline($client, new MarketIntelligenceService());
+            $newCreative = $pipeline->refineCreative($campaign, $validated['refinement_prompt']);
+
+            $campaign->update(['creative' => $newCreative]);
+        } catch (\Throwable $e) {
+            return redirect()
+                ->route('campaigns.show', $campaign)
+                ->with('message', 'No se pudo refinar el creative: '.$e->getMessage());
+        }
+
+        return redirect()
+            ->route('campaigns.show', $campaign)
+            ->with('message', 'Creative actualizado con tus indicaciones.');
     }
 
     public function show(Campaign $campaign)

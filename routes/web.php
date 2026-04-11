@@ -58,6 +58,9 @@ Route::middleware('auth')->group(function () {
         'index', 'create', 'store', 'show',
     ]);
 
+    Route::post('campaigns/{campaign}/refine-creative', [CampaignController::class, 'refineCreative'])
+        ->name('campaigns.refine-creative');
+
     Route::post('campaigns/{campaign}/send', [CampaignSendController::class, 'send'])
         ->name('campaigns.send');
 
