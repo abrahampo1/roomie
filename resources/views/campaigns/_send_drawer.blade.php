@@ -223,6 +223,9 @@
                 const max = {{ $max }};
                 const followupsToggle = document.getElementById('enable-followups-toggle');
                 const followupsParams = document.getElementById('followups-params');
+                const followupKeyInput = document.getElementById('followup_api_key');
+                const provider = @json($campaign->api_provider);
+                const storageKey = provider ? 'roomie:llm-key:' + provider : null;
 
                 function applyMode() {
                     const selected = document.querySelector('input[name="recipient_mode"]:checked');
@@ -255,6 +258,31 @@
                 if (followupsToggle) {
                     followupsToggle.addEventListener('change', applyFollowups);
                     applyFollowups();
+                }
+
+                // Pre-fill the follow-up API key input from the same localStorage
+                // slot the "Nueva campaña" form uses, so the user never has to
+                // re-paste it when the stored key has been wiped.
+                if (followupKeyInput && storageKey) {
+                    try {
+                        const stored = localStorage.getItem(storageKey);
+                        if (stored && !followupKeyInput.value) {
+                            followupKeyInput.value = stored;
+                        }
+                    } catch (e) { /* private mode */ }
+                }
+
+                // On submit, persist whatever is in the follow-up key input so
+                // the next drawer load has it available too.
+                const form = document.querySelector('form[action*="/send"]');
+                if (form && followupKeyInput && storageKey) {
+                    form.addEventListener('submit', () => {
+                        if (followupKeyInput.value) {
+                            try {
+                                localStorage.setItem(storageKey, followupKeyInput.value);
+                            } catch (e) { /* quota / private */ }
+                        }
+                    });
                 }
             })();
         </script>
