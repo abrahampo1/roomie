@@ -92,7 +92,14 @@ class CampaignController extends Controller
                 ->paginate(25);
         }
 
-        $maxRecipients = Customer::query()->whereNotNull('email')->count();
+        // Count distinct emails, not rows: the seeder can produce several
+        // customer rows per guest (one per reservation) and they collapse to a
+        // single outbound email. Showing the row count would over-promise
+        // how many unique inboxes "Todos" can actually reach.
+        $maxRecipients = Customer::query()
+            ->whereNotNull('email')
+            ->distinct()
+            ->count('email');
 
         return view('campaigns.show', compact(
             'campaign',
