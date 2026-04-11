@@ -35,6 +35,8 @@ class CampaignController extends Controller
         $validated = $request->validate([
             'name' => ['nullable', 'string', 'max:120'],
             'objective' => 'required|string|min:10|max:1000',
+            'aggressiveness' => ['required', 'integer', 'between:0,5'],
+            'manipulation' => ['required', 'integer', 'between:0,5'],
             'provider' => ['required', 'string', Rule::in(LlmClientFactory::PROVIDERS)],
             'api_key' => ['required', 'string', 'min:8', 'max:200'],
             'api_base_url' => ['nullable', 'required_if:provider,custom', 'url', 'max:255'],
@@ -45,6 +47,8 @@ class CampaignController extends Controller
             'user_id' => auth()->id(),
             'name' => $validated['name'] ?? null,
             'objective' => $validated['objective'],
+            'aggressiveness' => $validated['aggressiveness'],
+            'manipulation' => $validated['manipulation'],
             'api_provider' => $validated['provider'],
             'api_key' => $validated['api_key'],
             'api_base_url' => $validated['provider'] === 'custom' ? $validated['api_base_url'] : null,

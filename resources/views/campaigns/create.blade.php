@@ -73,6 +73,64 @@
                 </div>
             </div>
 
+            {{-- Tono de la campaña — sliders --}}
+            <div class="pt-8 border-t border-navy/10 space-y-8">
+                <div>
+                    <p class="text-sm font-medium mb-1">Tono de la campaña</p>
+                    <p class="text-xs text-navy/50 leading-relaxed mb-6 max-w-xl">
+                        Cuánto presionas al cliente y qué trucos psicológicos permites. Los agentes adaptarán estrategia, copy y tono a estos niveles.
+                    </p>
+
+                    {{-- Aggressiveness --}}
+                    <div class="mb-7">
+                        <div class="flex items-baseline justify-between gap-3 mb-2">
+                            <label for="aggressiveness" class="text-sm font-medium">Agresividad</label>
+                            <span class="text-xs text-navy/55 font-mono tabular-nums">
+                                <span id="aggressiveness-value">{{ old('aggressiveness', 2) }}</span>/5 · <span id="aggressiveness-label" class="text-navy">Equilibrada</span>
+                            </span>
+                        </div>
+                        <input
+                            type="range"
+                            name="aggressiveness"
+                            id="aggressiveness"
+                            min="0"
+                            max="5"
+                            step="1"
+                            value="{{ old('aggressiveness', 2) }}"
+                            class="w-full h-1.5 bg-navy/10 rounded-full appearance-none cursor-pointer accent-copper"
+                        >
+                        <div class="flex justify-between text-[10px] text-navy/35 mt-1.5 font-mono uppercase tracking-wider">
+                            <span>Informativa</span>
+                            <span>Agresiva</span>
+                        </div>
+                    </div>
+
+                    {{-- Manipulation --}}
+                    <div>
+                        <div class="flex items-baseline justify-between gap-3 mb-2">
+                            <label for="manipulation" class="text-sm font-medium">Manipulación</label>
+                            <span class="text-xs text-navy/55 font-mono tabular-nums">
+                                <span id="manipulation-value">{{ old('manipulation', 2) }}</span>/5 · <span id="manipulation-label" class="text-navy">Con urgencia</span>
+                            </span>
+                        </div>
+                        <input
+                            type="range"
+                            name="manipulation"
+                            id="manipulation"
+                            min="0"
+                            max="5"
+                            step="1"
+                            value="{{ old('manipulation', 2) }}"
+                            class="w-full h-1.5 bg-navy/10 rounded-full appearance-none cursor-pointer accent-copper"
+                        >
+                        <div class="flex justify-between text-[10px] text-navy/35 mt-1.5 font-mono uppercase tracking-wider">
+                            <span>Neutral</span>
+                            <span>Dark patterns</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <div class="pt-8 border-t border-navy/10 space-y-6">
                 <div>
                     <p class="text-sm font-medium mb-3">Modelo</p>
@@ -184,6 +242,28 @@
 
     @push('scripts')
     <script>
+        (function () {
+            const aggressivenessLabels = ['Informativa', 'Invitación', 'Equilibrada', 'Persuasiva', 'Insistente', 'Agresiva'];
+            const manipulationLabels  = ['Neutral', 'Sutil', 'Con urgencia', 'Con FOMO', 'Con presión', 'Dark patterns'];
+
+            function wireSlider(inputId, labels) {
+                const input = document.getElementById(inputId);
+                const valueEl = document.getElementById(inputId + '-value');
+                const labelEl = document.getElementById(inputId + '-label');
+                if (!input) return;
+                const apply = () => {
+                    const v = parseInt(input.value, 10) || 0;
+                    valueEl.textContent = v;
+                    labelEl.textContent = labels[v] ?? '';
+                };
+                input.addEventListener('input', apply);
+                apply();
+            }
+
+            wireSlider('aggressiveness', aggressivenessLabels);
+            wireSlider('manipulation', manipulationLabels);
+        })();
+
         (function () {
             const placeholders = {
                 anthropic: 'sk-ant-...',

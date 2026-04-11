@@ -12,6 +12,12 @@
         if ($providerLabel && $campaign->api_provider === 'custom' && $campaign->api_model) {
             $providerLabel .= ' · '.$campaign->api_model;
         }
+        $intensityLabels = [
+            'aggressiveness' => ['Informativa', 'Invitación', 'Equilibrada', 'Persuasiva', 'Insistente', 'Agresiva'],
+            'manipulation' => ['Neutral', 'Sutil', 'Con urgencia', 'Con FOMO', 'Con presión', 'Dark patterns'],
+        ];
+        $agg = $campaign->aggressiveness ?? 2;
+        $man = $campaign->manipulation ?? 2;
     @endphp
 
     <a href="{{ route('campaigns.index') }}" class="text-xs text-navy/45 hover:text-navy transition py-2 -my-2 inline-block">
@@ -49,6 +55,9 @@
                 {{ $campaign->status === 'pending' ? 'text-navy/55' : '' }}
                 {{ $campaign->status === 'failed' ? 'text-red-700' : '' }}">
                 {{ $statusLabels[$campaign->status] ?? $campaign->status }}
+            </span>
+            <span class="text-xs text-navy/50">
+                Agresividad <span class="font-mono text-navy">{{ $agg }}/5</span> · Manipulación <span class="font-mono text-navy">{{ $man }}/5</span>
             </span>
         </div>
     </header>

@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-#[Fillable(['user_id', 'name', 'objective', 'status', 'analysis', 'strategy', 'creative', 'audit', 'quality_score', 'api_provider', 'api_key', 'api_base_url', 'api_model'])]
+#[Fillable(['user_id', 'name', 'objective', 'aggressiveness', 'manipulation', 'status', 'analysis', 'strategy', 'creative', 'audit', 'quality_score', 'api_provider', 'api_key', 'api_base_url', 'api_model'])]
 class Campaign extends Model
 {
     protected function casts(): array
@@ -17,6 +17,8 @@ class Campaign extends Model
             'creative' => 'array',
             'audit' => 'array',
             'quality_score' => 'integer',
+            'aggressiveness' => 'integer',
+            'manipulation' => 'integer',
             'api_key' => 'encrypted',
         ];
     }
