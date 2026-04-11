@@ -1,3 +1,63 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## Project context
+
+Roomie is a hotel marketing campaign generator built for the Eurostars Hotel Company challenge at Impacthon 2026. A user types a business objective ("raise off-season occupancy at Eurostars Torre Sevilla", "reactivate guests who haven't booked in 6 months") and a pipeline of four LLM agents runs sequentially to produce a ready-to-send email campaign with strategy, creative and a quality audit.
+
+The whole stack is Spanish-first. Copy, UI labels and the prompt instructions all live in Spanish — preserve that voice when editing text.
+
+## Commands
+
+- `composer run dev` — starts `php artisan serve`, `queue:listen`, `pail` (log tail) and `npm run dev` concurrently. Default way to develop.
+- `composer test` — clears config cache and runs Pest. `php artisan test --compact --filter=testName` for a single test.
+- `php artisan migrate:fresh --seed` — nuke and reseed. Needed when playing with the customer/hotel datasets.
+- `php artisan db:seed --class=CustomerSeeder` — reseed just customers.
+- `vendor/bin/pint --dirty --format agent` — run after touching any PHP file (mandated by the embedded Boost rules below).
+- `npm run build` — production asset build when the dev server isn't running.
+
+## Architecture — the four-agent pipeline
+
+The core domain is a single linear pipeline. One request goes through five files, in order:
+
+1. **`app/Http/Controllers/CampaignController.php`** — `store()` validates the form (objective + LLM provider + API key + optional custom URL/model), creates a `Campaign` row with `status=pending`, and dispatches `RunCampaignPipeline`.
+2. **`app/Jobs/RunCampaignPipeline.php`** — builds an `LlmClient` via `LlmClientFactory::make(...)` and hands it to `CampaignPipeline`. A `finally` block wipes `api_key` from the campaign row regardless of outcome — **this is load-bearing, don't remove it** (see BYOK section).
+3. **`app/Services/Campaign/CampaignPipeline.php`** — runs four private methods (`runAnalyst`, `runStrategist`, `runCreative`, `runAuditor`) in order. Each one writes its result to the campaign (`analysis`, `strategy`, `creative`, `audit`) **before** the next one runs, so the `/campaigns/{id}/status` polling endpoint can show progressive completion. The strategist, creative and auditor each receive the *output* of the previous agent as context. Hotels and a random 50-customer sample are built once at the top of `run()` and reused.
+4. **`app/Services/LLM/LlmClient.php`** + implementations — the abstraction the pipeline actually talks to. See next section.
+5. **`app/Models/Campaign.php`** — `analysis`, `strategy`, `creative`, `audit` are `array` casts backed by JSON columns. `api_key` is an `encrypted` cast.
+
+Prompts are inline heredocs in `CampaignPipeline`. They demand `Responde SOLO el JSON` at the end because the two JSON-mode-capable clients (Anthropic doesn't have one, Google and OpenAI-compatible do) still fall through `JsonExtractor::fromText()` which has a regex fallback (`/\{[\s\S]*\}/`) for when models wrap the answer in prose.
+
+Status polling lives in `campaigns/show.blade.php` — a `@push('scripts')` block polls `/campaigns/{id}/status` every 3s and reloads on `completed`/`failed`.
+
+## LLM provider abstraction (BYOK — critical)
+
+**Roomie has no global LLM API key and should not grow one.** The user supplies their key per campaign via the form. The key is encrypted on `campaigns.api_key` (encrypted cast), used by the job, then nulled in the job's `finally` block.
+
+Supported providers, all routed through `app/Services/LLM/LlmClientFactory::make()`:
+
+| Provider | Client | Model | Notes |
+|---|---|---|---|
+| `anthropic` | `AnthropicClient` | `claude-sonnet-4-20250514` | Messages API, no JSON mode |
+| `google` | `GoogleClient` | `gemini-2.0-flash` | Uses `responseMimeType: application/json` |
+| `openai` | `OpenAiCompatibleClient` | `gpt-4o-mini` | OpenAI chat completions, `response_format: json_object` |
+| `deepseek` | `OpenAiCompatibleClient` | `deepseek-chat` | Same as OpenAI |
+| `custom` | `OpenAiCompatibleClient` | user-supplied | Requires `api_base_url` + `api_model` from the form, JSON enforcement off (not every OpenAI-compatible server supports it) |
+
+`OpenAiCompatibleClient` handles `openai`, `deepseek` and `custom` — the three differ only in base URL, model, and the `enforceJson` flag. When adding a new provider, prefer extending the factory + reusing `OpenAiCompatibleClient` if the server speaks OpenAI chat completions.
+
+The form UI (`campaigns/create.blade.php`) caches keys in `localStorage` keyed by `roomie:llm-key:{provider}` so users don't re-paste across sessions. Custom also caches URL and model separately. The keys never leave the browser except when submitted with the form.
+
+## Key gotchas
+
+- **Design language is restrained editorial, not brutalist.** The user explicitly pushed back on hard offset shadows, outlined display text, marquee strips, `/ slash` prefixed labels, `01/02/03` numbered badges and bento grids — those all read as AI-generated. The current look uses Fredoka for display, Inter body, JetBrains Mono for small captions, a single `text-copper` accent per section, `definition list` semantics and generous whitespace. Match that voice.
+- **Mobile inputs must be `text-base` (16px)** or iOS Safari zooms on focus. Applies to all form fields. The key/URL/model inputs also need `autocapitalize="none" autocorrect="off" spellcheck="false"` — iOS will otherwise corrupt them.
+- **Customers seeder has a composite `(guest_id, reservation_id)` unique**, not a standalone unique on `guest_id`. The CSV contains multiple reservations per guest. Migration `2026_04_11_000003_fix_customers_guest_id_unique.php` replaced the original unique — don't re-introduce the standalone one.
+- **The hotel/customer context passed to the LLM is built fresh every run** from `Hotel::all()` and `Customer::inRandomOrder()->limit(50)`. Keep an eye on this if either table grows large — the whole hotels table is currently serialized into every prompt.
+
+---
+
 <laravel-boost-guidelines>
 === foundation rules ===
 
