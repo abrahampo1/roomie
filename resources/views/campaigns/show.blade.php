@@ -9,6 +9,9 @@
         $providerLabel = $campaign->api_provider
             ? \App\Services\LLM\LlmClientFactory::label($campaign->api_provider)
             : null;
+        if ($providerLabel && $campaign->api_provider === 'custom' && $campaign->api_model) {
+            $providerLabel .= ' · '.$campaign->api_model;
+        }
     @endphp
 
     <a href="{{ route('campaigns.index') }}" class="text-xs text-navy/45 hover:text-navy transition">

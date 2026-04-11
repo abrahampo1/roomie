@@ -29,6 +29,8 @@ class RunCampaignPipeline implements ShouldQueue
             $client = LlmClientFactory::make(
                 $this->campaign->api_provider,
                 $this->campaign->api_key,
+                $this->campaign->api_base_url,
+                $this->campaign->api_model,
             );
 
             (new CampaignPipeline($client))->run($this->campaign);

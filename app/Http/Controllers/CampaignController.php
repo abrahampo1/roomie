@@ -32,13 +32,17 @@ class CampaignController extends Controller
         $validated = $request->validate([
             'objective' => 'required|string|min:10|max:1000',
             'provider' => ['required', 'string', Rule::in(LlmClientFactory::PROVIDERS)],
-            'api_key' => ['required', 'string', 'min:20', 'max:200'],
+            'api_key' => ['required', 'string', 'min:8', 'max:200'],
+            'api_base_url' => ['nullable', 'required_if:provider,custom', 'url', 'max:255'],
+            'api_model' => ['nullable', 'required_if:provider,custom', 'string', 'max:100'],
         ]);
 
         $campaign = Campaign::create([
             'objective' => $validated['objective'],
             'api_provider' => $validated['provider'],
             'api_key' => $validated['api_key'],
+            'api_base_url' => $validated['provider'] === 'custom' ? $validated['api_base_url'] : null,
+            'api_model' => $validated['provider'] === 'custom' ? $validated['api_model'] : null,
             'status' => 'pending',
         ]);
 

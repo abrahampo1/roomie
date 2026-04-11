@@ -54,10 +54,13 @@
             <div class="pt-8 border-t border-navy/10 space-y-6">
                 <div>
                     <p class="text-sm font-medium mb-2">Modelo</p>
-                    <div class="inline-flex border border-navy/20 rounded-full p-1 bg-white">
+                    <div class="inline-flex flex-wrap gap-1 border border-navy/20 rounded-full p-1 bg-white">
                         @foreach ([
-                            'anthropic' => 'Anthropic Claude',
-                            'google' => 'Google Gemini',
+                            'anthropic' => 'Anthropic',
+                            'google' => 'Google',
+                            'openai' => 'OpenAI',
+                            'deepseek' => 'DeepSeek',
+                            'custom' => 'Custom',
                         ] as $value => $label)
                             <label class="cursor-pointer">
                                 <input
@@ -67,7 +70,7 @@
                                     class="peer sr-only"
                                     {{ old('provider', 'anthropic') === $value ? 'checked' : '' }}
                                 >
-                                <span class="block px-4 py-1.5 text-xs font-medium rounded-full text-navy/55 peer-checked:bg-navy peer-checked:text-cream transition">
+                                <span class="block px-3.5 py-1.5 text-xs font-medium rounded-full text-navy/55 peer-checked:bg-navy peer-checked:text-cream transition">
                                     {{ $label }}
                                 </span>
                             </label>
@@ -76,6 +79,42 @@
                     @error('provider')
                         <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
                     @enderror
+                </div>
+
+                <div id="custom-fields" hidden class="space-y-4 border-l-2 border-copper/40 pl-4">
+                    <div>
+                        <label for="api_base_url" class="block text-sm font-medium mb-2">Base URL</label>
+                        <input
+                            type="url"
+                            name="api_base_url"
+                            id="api_base_url"
+                            autocomplete="off"
+                            spellcheck="false"
+                            class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 font-mono text-sm text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition"
+                            placeholder="https://api.together.xyz/v1"
+                            value="{{ old('api_base_url') }}"
+                        >
+                        <p class="text-xs text-navy/45 mt-1.5">Endpoint compatible con la API de OpenAI (chat/completions).</p>
+                        @error('api_base_url')
+                            <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
+                        @enderror
+                    </div>
+                    <div>
+                        <label for="api_model" class="block text-sm font-medium mb-2">Modelo</label>
+                        <input
+                            type="text"
+                            name="api_model"
+                            id="api_model"
+                            autocomplete="off"
+                            spellcheck="false"
+                            class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 font-mono text-sm text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition"
+                            placeholder="meta-llama/Llama-3.3-70B-Instruct-Turbo"
+                            value="{{ old('api_model') }}"
+                        >
+                        @error('api_model')
+                            <p class="text-red-600 text-sm mt-2">{{ $message }}</p>
+                        @enderror
+                    </div>
                 </div>
 
                 <div>
@@ -118,25 +157,58 @@
             const placeholders = {
                 anthropic: 'sk-ant-...',
                 google: 'AIza...',
+                openai: 'sk-proj-...',
+                deepseek: 'sk-...',
+                custom: 'sk-... (o cualquier valor si tu endpoint no requiere auth)',
             };
             const docs = {
                 anthropic: 'https://console.anthropic.com/settings/keys',
                 google: 'https://aistudio.google.com/apikey',
+                openai: 'https://platform.openai.com/api-keys',
+                deepseek: 'https://platform.deepseek.com/api_keys',
+                custom: null,
             };
+
             const storageKey = (provider) => 'roomie:llm-key:' + provider;
+            const storageUrl = 'roomie:llm-url:custom';
+            const storageModel = 'roomie:llm-model:custom';
 
             const keyInput = document.getElementById('api_key');
             const link = document.getElementById('provider-link');
+            const customFields = document.getElementById('custom-fields');
+            const baseUrlInput = document.getElementById('api_base_url');
+            const modelInput = document.getElementById('api_model');
             const radios = document.querySelectorAll('input[name="provider"]');
             const form = keyInput.closest('form');
 
+            const safeGet = (k) => {
+                try { return localStorage.getItem(k) || ''; } catch (e) { return ''; }
+            };
+            const safeSet = (k, v) => {
+                try { localStorage.setItem(k, v); } catch (e) { /* private mode / quota */ }
+            };
+
             function applyProvider(provider) {
                 keyInput.placeholder = placeholders[provider] ?? '';
-                if (link) link.href = docs[provider] ?? '#';
-                try {
-                    keyInput.value = localStorage.getItem(storageKey(provider)) || '';
-                } catch (e) {
-                    keyInput.value = '';
+                keyInput.value = safeGet(storageKey(provider));
+
+                if (link) {
+                    if (docs[provider]) {
+                        link.href = docs[provider];
+                        link.hidden = false;
+                    } else {
+                        link.hidden = true;
+                    }
+                }
+
+                const isCustom = provider === 'custom';
+                customFields.hidden = !isCustom;
+                baseUrlInput.required = isCustom;
+                modelInput.required = isCustom;
+
+                if (isCustom) {
+                    if (!baseUrlInput.value) baseUrlInput.value = safeGet(storageUrl);
+                    if (!modelInput.value) modelInput.value = safeGet(storageModel);
                 }
             }
 
@@ -149,12 +221,11 @@
 
             form.addEventListener('submit', () => {
                 const provider = document.querySelector('input[name="provider"]:checked')?.value;
-                if (provider && keyInput.value) {
-                    try {
-                        localStorage.setItem(storageKey(provider), keyInput.value);
-                    } catch (e) {
-                        // ignore quota / private mode errors
-                    }
+                if (!provider) return;
+                if (keyInput.value) safeSet(storageKey(provider), keyInput.value);
+                if (provider === 'custom') {
+                    if (baseUrlInput.value) safeSet(storageUrl, baseUrlInput.value);
+                    if (modelInput.value) safeSet(storageModel, modelInput.value);
                 }
             });
         })();

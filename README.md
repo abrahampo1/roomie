@@ -45,7 +45,7 @@ cp .env.example .env
 php artisan key:generate
 ```
 
-Roomie usa **bring your own key**: cada usuario introduce su propia clave de Anthropic Claude o Google Gemini al crear una campaña. La clave se cifra, se usa para esa ejecución del pipeline y se borra de la base de datos en cuanto el job termina (éxito o fallo). El frontend la guarda en `localStorage` para no tener que pegarla cada vez.
+Roomie usa **bring your own key**: cada usuario introduce su propia clave al crear una campaña. Soporta Anthropic Claude, Google Gemini, OpenAI, DeepSeek y cualquier endpoint compatible con la API de OpenAI (Together, Groq, Fireworks, un modelo local, etc.) introduciendo base URL y modelo. La clave se cifra, se usa para esa ejecución del pipeline y se borra de la base de datos en cuanto el job termina (éxito o fallo). El frontend la guarda en `localStorage` para no tener que pegarla cada vez.
 
 No hace falta configurar ninguna clave en `.env`.
 
