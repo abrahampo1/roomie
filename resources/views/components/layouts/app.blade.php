@@ -13,6 +13,15 @@
     <link href="https://fonts.bunny.net/css?family=inter:300,400,500,600,700|fredoka:500,600,700|jetbrains-mono:400,500" rel="stylesheet" />
 
     @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    {{-- Microsoft Clarity --}}
+    <script type="text/javascript">
+        (function(c,l,a,r,i,t,y){
+            c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+            t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+            y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "wa03z3i5ic");
+    </script>
 </head>
 <body class="h-full bg-cream text-navy antialiased selection:bg-navy selection:text-cream">
 
