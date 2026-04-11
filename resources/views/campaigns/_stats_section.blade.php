@@ -117,15 +117,57 @@
                 $clicksPath = $pathFor('clicks');
             @endphp
 
+            @php
+                $pointPcts = [];
+                for ($i = 0; $i < $count; $i++) {
+                    $pointPcts[$i] = $count > 1 ? ($padX + $stepX * $i) / $vbW * 100 : 50;
+                }
+            @endphp
+
             <div class="relative w-full">
-                <svg viewBox="0 0 {{ $vbW }} {{ $vbH }}" preserveAspectRatio="none" class="w-full h-32 sm:h-40">
-                    {{-- baseline --}}
-                    <line x1="{{ $padX }}" y1="{{ $vbH - $padY }}" x2="{{ $vbW - $padX }}" y2="{{ $vbH - $padY }}" stroke="#1a1a2e" stroke-opacity="0.1" stroke-width="1" />
-                    {{-- opens line --}}
-                    <path d="{{ $opensPath }}" fill="none" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                    {{-- clicks line --}}
-                    <path d="{{ $clicksPath }}" fill="none" stroke="#c8956c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
+                <div class="relative">
+                    <svg viewBox="0 0 {{ $vbW }} {{ $vbH }}" preserveAspectRatio="none" class="block w-full h-32 sm:h-40">
+                        {{-- baseline --}}
+                        <line x1="{{ $padX }}" y1="{{ $vbH - $padY }}" x2="{{ $vbW - $padX }}" y2="{{ $vbH - $padY }}" stroke="#1a1a2e" stroke-opacity="0.1" stroke-width="1" />
+                        {{-- opens line --}}
+                        <path d="{{ $opensPath }}" fill="none" stroke="#1a1a2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                        {{-- clicks line --}}
+                        <path d="{{ $clicksPath }}" fill="none" stroke="#c8956c" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                    </svg>
+
+                    @foreach ($buckets as $i => $b)
+                        @php
+                            $pointPct = $pointPcts[$i];
+                            $zoneLeft = $i === 0 ? 0 : ($pointPcts[$i - 1] + $pointPct) / 2;
+                            $zoneRight = $i === $count - 1 ? 100 : ($pointPct + $pointPcts[$i + 1]) / 2;
+                            $zoneWidth = max(0.01, $zoneRight - $zoneLeft);
+                            $dotLeftInZone = ($pointPct - $zoneLeft) / $zoneWidth * 100;
+                            $opensTopPct = ($padY + $usableH - ($b['opens'] / $maxY) * $usableH) / $vbH * 100;
+                            $clicksTopPct = ($padY + $usableH - ($b['clicks'] / $maxY) * $usableH) / $vbH * 100;
+                            $tooltipClass = $i <= 1
+                                ? ''
+                                : ($i >= $count - 2 ? '-translate-x-full' : '-translate-x-1/2');
+                        @endphp
+                        <div class="absolute top-0 bottom-0 group/point" style="left: {{ $zoneLeft }}%; width: {{ $zoneWidth }}%;">
+                            <div class="absolute top-0 bottom-0 w-px bg-navy/20 opacity-0 group-hover/point:opacity-100 transition-opacity pointer-events-none" style="left: {{ $dotLeftInZone }}%; transform: translateX(-50%);"></div>
+                            <div class="absolute w-2 h-2 rounded-full bg-navy opacity-0 group-hover/point:opacity-100 transition-opacity pointer-events-none" style="left: {{ $dotLeftInZone }}%; top: {{ $opensTopPct }}%; transform: translate(-50%, -50%);"></div>
+                            <div class="absolute w-2 h-2 rounded-full bg-copper opacity-0 group-hover/point:opacity-100 transition-opacity pointer-events-none" style="left: {{ $dotLeftInZone }}%; top: {{ $clicksTopPct }}%; transform: translate(-50%, -50%);"></div>
+                            <div class="absolute top-1 pointer-events-none opacity-0 group-hover/point:opacity-100 transition-opacity z-20 {{ $tooltipClass }}" style="left: {{ $dotLeftInZone }}%;">
+                                <div class="bg-navy text-cream rounded-lg px-3 py-2 shadow-lg whitespace-nowrap">
+                                    <p class="text-cream/60 text-[9px] font-mono uppercase tracking-wider mb-1.5">{{ $b['label'] }}</p>
+                                    <div class="flex items-center gap-4 text-[11px]">
+                                        <span class="inline-flex items-center gap-1.5"><span class="w-2 h-px bg-cream"></span>Opens</span>
+                                        <span class="tabular-nums font-mono ml-auto">{{ $b['opens'] }}</span>
+                                    </div>
+                                    <div class="flex items-center gap-4 text-[11px]">
+                                        <span class="inline-flex items-center gap-1.5"><span class="w-2 h-px bg-copper"></span>Clicks</span>
+                                        <span class="tabular-nums font-mono ml-auto">{{ $b['clicks'] }}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
                 <div class="flex justify-between text-[10px] text-navy/35 font-mono mt-1">
                     <span>{{ $buckets[0]['label'] ?? '' }}</span>
                     <span>{{ $buckets[$count - 1]['label'] ?? '' }}</span>
