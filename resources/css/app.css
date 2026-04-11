@@ -18,3 +18,5 @@
     --color-copper: #c8956c;
     --color-copper-dark: #a67548;
 }
+
+[x-cloak] { display: none !important; }

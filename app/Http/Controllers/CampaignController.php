@@ -7,7 +7,6 @@ use App\Models\Campaign;
 use App\Models\Customer;
 use App\Models\Hotel;
 use App\Services\Campaign\CampaignPipeline;
-use App\Services\Email\CampaignStatsService;
 use App\Services\LLM\LlmClientFactory;
 use App\Services\MarketIntelligence\MarketIntelligenceService;
 use Illuminate\Http\RedirectResponse;
@@ -93,7 +92,7 @@ class CampaignController extends Controller
                 $campaign->api_model,
             );
 
-            $pipeline = new CampaignPipeline($client, new MarketIntelligenceService());
+            $pipeline = new CampaignPipeline($client, new MarketIntelligenceService);
             $newCreative = $pipeline->refineCreative($campaign, $validated['refinement_prompt']);
 
             $campaign->update(['creative' => $newCreative]);
@@ -112,46 +111,6 @@ class CampaignController extends Controller
     {
         abort_unless($campaign->user_id === auth()->id(), 403);
 
-        $stats = null;
-        $funnel = null;
-        $timeSeries = null;
-        $countryBreakdown = null;
-        $segmentBreakdown = null;
-        $followupPerformance = null;
-        $recipients = null;
-
-        if ($campaign->send_enabled) {
-            $statsService = new CampaignStatsService();
-            $stats = $statsService->forCampaign($campaign);
-            $funnel = $statsService->funnelFor($campaign);
-            $timeSeries = $statsService->timeSeriesFor($campaign);
-            $countryBreakdown = $statsService->countryBreakdownFor($campaign);
-            $segmentBreakdown = $statsService->segmentBreakdownFor($campaign);
-            $followupPerformance = $statsService->followupPerformanceFor($campaign);
-            $recipients = $campaign->recipients()
-                ->orderByDesc('last_sent_at')
-                ->paginate(25);
-        }
-
-        // Count distinct emails, not rows: the seeder can produce several
-        // customer rows per guest (one per reservation) and they collapse to a
-        // single outbound email. Showing the row count would over-promise
-        // how many unique inboxes "Todos" can actually reach.
-        $maxRecipients = Customer::query()
-            ->whereNotNull('email')
-            ->distinct()
-            ->count('email');
-
-        return view('campaigns.show', compact(
-            'campaign',
-            'stats',
-            'funnel',
-            'timeSeries',
-            'countryBreakdown',
-            'segmentBreakdown',
-            'followupPerformance',
-            'recipients',
-            'maxRecipients',
-        ));
+        return view('campaigns.show', compact('campaign'));
     }
 }

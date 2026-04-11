@@ -1,13 +1,8 @@
 @php
-    $sentAtTs = $campaign->sent_at?->getTimestamp() ?? 0;
     $demoMode = ! (bool) config('services.roomie.allow_real_sends', false);
 @endphp
 
-<div
-    id="campaign-stats"
-    data-refresh-url="{{ route('campaigns.stats', $campaign) }}"
-    data-sent-at="{{ $sentAtTs }}"
->
+<div>
     <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-5 flex items-center gap-3">
         Dashboard
         @if ($demoMode)
@@ -16,7 +11,7 @@
                 Modo demo · engagement simulado
             </span>
         @endif
-        <button type="button" data-stats-refresh class="ml-auto text-navy/40 hover:text-navy transition underline underline-offset-4 decoration-navy/20 normal-case tracking-normal">
+        <button type="button" wire:click="$refresh" class="ml-auto text-navy/40 hover:text-navy transition underline underline-offset-4 decoration-navy/20 normal-case tracking-normal">
             refrescar
         </button>
     </p>
@@ -314,42 +309,3 @@
         </section>
     @endif
 </div>
-
-<script>
-    (function () {
-        const container = document.getElementById('campaign-stats');
-        if (!container || container.dataset.wired === '1') return;
-        container.dataset.wired = '1';
-
-        const refreshBtn = container.querySelector('[data-stats-refresh]');
-        const url = container.dataset.refreshUrl;
-        const sentAt = parseInt(container.dataset.sentAt || '0', 10);
-
-        async function refresh() {
-            try {
-                const res = await fetch(url, { headers: { 'Accept': 'text/html' } });
-                if (!res.ok) return;
-                const html = await res.text();
-                container.outerHTML = html;
-            } catch (e) { /* noop */ }
-        }
-
-        if (refreshBtn) {
-            refreshBtn.addEventListener('click', refresh);
-        }
-
-        // Auto-refresh every 6s during the first 30 minutes after sent_at.
-        // Demo simulation drip-feeds engagement for ~90s, so this catches
-        // everything live. After 30 min we stop — real opens trickle in
-        // much more slowly and ad-hoc refresh is enough.
-        if (sentAt > 0) {
-            const ageMs = Date.now() - sentAt * 1000;
-            const windowMs = 30 * 60 * 1000;
-            if (ageMs < windowMs) {
-                const remaining = windowMs - ageMs;
-                const ticker = setInterval(refresh, 6000);
-                setTimeout(() => clearInterval(ticker), remaining);
-            }
-        }
-    })();
-</script>

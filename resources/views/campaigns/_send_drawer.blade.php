@@ -75,14 +75,54 @@
             </div>
         @endif
 
-        <form method="POST" action="{{ route('campaigns.send', $campaign) }}" class="space-y-10">
+        <form
+            method="POST"
+            action="{{ route('campaigns.send', $campaign) }}"
+            class="space-y-10"
+            x-data="{
+                mode: '50',
+                customCount: 50,
+                max: {{ $max }},
+                followupsOn: {{ $campaign->followups_enabled ? 'true' : 'false' }},
+                storageKey: @js($campaign->api_provider ? 'roomie:llm-key:'.$campaign->api_provider : null),
+                keyValue: '',
+                get liveCount() {
+                    if (this.mode === 'custom') return this.customCount || 0;
+                    if (this.mode === 'all') return this.max;
+                    return parseInt(this.mode, 10) || 0;
+                },
+                clampCustom() {
+                    let v = parseInt(this.customCount, 10);
+                    if (isNaN(v)) v = 1;
+                    if (v > this.max) v = this.max;
+                    if (v < 1) v = 1;
+                    this.customCount = v;
+                },
+                init() {
+                    if (! this.storageKey) return;
+                    try {
+                        const stored = localStorage.getItem(this.storageKey);
+                        if (stored && ! this.keyValue) {
+                            this.keyValue = stored;
+                        }
+                    } catch (e) { /* private mode */ }
+                },
+                persistKey() {
+                    if (! this.storageKey || ! this.keyValue) return;
+                    try {
+                        localStorage.setItem(this.storageKey, this.keyValue);
+                    } catch (e) { /* quota / private */ }
+                },
+            }"
+            @submit="persistKey()"
+        >
             @csrf
 
             {{-- ═══ Recipient count ═══ --}}
             <div>
                 <p class="text-sm font-medium mb-4">Cuántos destinatarios</p>
 
-                <div id="recipient-modes" class="flex flex-wrap gap-2 mb-4">
+                <div class="flex flex-wrap gap-2 mb-4">
                     @foreach ([
                         '50' => '50',
                         '100' => '100',
@@ -96,8 +136,7 @@
                                 name="recipient_mode"
                                 value="{{ $value }}"
                                 class="peer sr-only"
-                                {{ $value === '50' ? 'checked' : '' }}
-                                data-value="{{ $value }}"
+                                x-model="mode"
                             >
                             <span class="block px-4 py-2 text-sm font-medium rounded-xl border border-navy/15 bg-white text-navy/65 peer-checked:bg-navy peer-checked:text-cream peer-checked:border-navy transition-colors">
                                 {{ $label }}
@@ -109,7 +148,7 @@
                     @endforeach
                 </div>
 
-                <div id="custom-count-wrapper" hidden class="mb-4">
+                <div x-show="mode === 'custom'" x-cloak class="mb-4">
                     <label for="recipient_count_custom" class="sr-only">Número de destinatarios</label>
                     <div class="flex items-center gap-3">
                         <input
@@ -118,7 +157,8 @@
                             id="recipient_count_custom"
                             min="1"
                             max="{{ $max }}"
-                            value="50"
+                            x-model.number="customCount"
+                            @input="clampCustom()"
                             class="w-32 rounded-xl border border-navy/20 bg-white px-4 py-2.5 text-base font-mono text-navy focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition"
                         >
                         <span class="text-sm text-navy/55">destinatarios (máx {{ $max }})</span>
@@ -126,7 +166,7 @@
                 </div>
 
                 <p class="text-xs text-navy/55 font-mono">
-                    <span id="recipient-count-live" class="text-navy font-medium">50</span> emails · ranking automático por afinidad con la estrategia
+                    <span class="text-navy font-medium" x-text="liveCount">50</span> emails · ranking automático por afinidad con la estrategia
                 </p>
             </div>
 
@@ -168,6 +208,7 @@
                                 autocapitalize="none"
                                 autocorrect="off"
                                 spellcheck="false"
+                                x-model="keyValue"
                                 class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 font-mono text-base text-navy placeholder:text-navy/30 focus:outline-none focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition"
                                 placeholder="{{ $keyPlaceholder }}"
                             >
@@ -178,13 +219,13 @@
                     @endif
 
                     <label class="flex items-start gap-2.5 text-sm cursor-pointer select-none">
-                        <input type="checkbox" name="enable_followups" value="1" id="enable-followups-toggle" class="mt-1 rounded border-navy/30 text-navy focus:ring-navy/20">
+                        <input type="checkbox" name="enable_followups" value="1" x-model="followupsOn" class="mt-1 rounded border-navy/30 text-navy focus:ring-navy/20">
                         <span class="leading-snug">
                             Activar la secuencia de follow-ups para esta campaña
                         </span>
                     </label>
 
-                    <div id="followups-params" hidden class="flex gap-4 max-w-md">
+                    <div x-show="followupsOn" x-cloak class="flex gap-4 max-w-md">
                         <div class="flex-1">
                             <label for="followup_max_attempts" class="block text-xs text-navy/55 mb-1.5">Intentos máx.</label>
                             <select name="followup_max_attempts" id="followup_max_attempts" class="w-full rounded-xl border border-navy/20 bg-white px-3 py-2.5 text-base">
@@ -213,78 +254,5 @@
                 <svg class="w-3 h-3 text-copper" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
             </button>
         </form>
-
-        <script>
-            (function () {
-                const modes = document.querySelectorAll('input[name="recipient_mode"]');
-                const customWrapper = document.getElementById('custom-count-wrapper');
-                const customInput = document.getElementById('recipient_count_custom');
-                const live = document.getElementById('recipient-count-live');
-                const max = {{ $max }};
-                const followupsToggle = document.getElementById('enable-followups-toggle');
-                const followupsParams = document.getElementById('followups-params');
-                const followupKeyInput = document.getElementById('followup_api_key');
-                const provider = @json($campaign->api_provider);
-                const storageKey = provider ? 'roomie:llm-key:' + provider : null;
-
-                function applyMode() {
-                    const selected = document.querySelector('input[name="recipient_mode"]:checked');
-                    if (!selected) return;
-                    const value = selected.value;
-                    customWrapper.hidden = (value !== 'custom');
-                    if (value === 'custom') {
-                        live.textContent = customInput.value || '0';
-                    } else if (value === 'all') {
-                        live.textContent = max;
-                    } else {
-                        live.textContent = value;
-                    }
-                }
-
-                modes.forEach(r => r.addEventListener('change', applyMode));
-                customInput.addEventListener('input', () => {
-                    if (parseInt(customInput.value, 10) > max) customInput.value = max;
-                    if (parseInt(customInput.value, 10) < 1) customInput.value = 1;
-                    if (document.querySelector('input[name="recipient_mode"]:checked').value === 'custom') {
-                        live.textContent = customInput.value || '0';
-                    }
-                });
-                applyMode();
-
-                function applyFollowups() {
-                    if (!followupsToggle || !followupsParams) return;
-                    followupsParams.hidden = !followupsToggle.checked;
-                }
-                if (followupsToggle) {
-                    followupsToggle.addEventListener('change', applyFollowups);
-                    applyFollowups();
-                }
-
-                // Pre-fill the follow-up API key input from the same localStorage
-                // slot the "Nueva campaña" form uses, so the user never has to
-                // re-paste it when the stored key has been wiped.
-                if (followupKeyInput && storageKey) {
-                    try {
-                        const stored = localStorage.getItem(storageKey);
-                        if (stored && !followupKeyInput.value) {
-                            followupKeyInput.value = stored;
-                        }
-                    } catch (e) { /* private mode */ }
-                }
-
-                // On submit, persist whatever is in the follow-up key input so
-                // the next drawer load has it available too.
-                const form = document.querySelector('form[action*="/send"]');
-                if (form && followupKeyInput && storageKey) {
-                    form.addEventListener('submit', () => {
-                        if (followupKeyInput.value) {
-                            try {
-                                localStorage.setItem(storageKey, followupKeyInput.value);
-                            } catch (e) { /* quota / private */ }
-                        }
-                    });
-                }
-            })();
-        </script>
     @endif
 </section>
