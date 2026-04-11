@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\V1\CampaignApiController;
 use App\Http\Controllers\Api\V1\MetaApiController;
+use App\Http\Controllers\Api\V1\WebhookApiController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -41,6 +42,13 @@ Route::prefix('v1')->group(function () {
                 ->name('api.v1.campaigns.stats');
             Route::get('campaigns/{campaign}/recipients', [CampaignApiController::class, 'recipients'])
                 ->name('api.v1.campaigns.recipients');
+
+            Route::get('webhooks', [WebhookApiController::class, 'index'])
+                ->name('api.v1.webhooks.index');
+            Route::get('webhooks/{webhook}', [WebhookApiController::class, 'show'])
+                ->name('api.v1.webhooks.show');
+            Route::get('webhooks/{webhook}/deliveries', [WebhookApiController::class, 'deliveries'])
+                ->name('api.v1.webhooks.deliveries');
         });
 
         // Write-heavy endpoints — stricter throttle
@@ -55,6 +63,17 @@ Route::prefix('v1')->group(function () {
                 ->name('api.v1.campaigns.stop-followups');
             Route::post('campaigns/{campaign}/recipients/{recipient}/toggle-conversion', [CampaignApiController::class, 'toggleConversion'])
                 ->name('api.v1.campaigns.toggle-conversion');
+
+            Route::post('webhooks', [WebhookApiController::class, 'store'])
+                ->name('api.v1.webhooks.store');
+            Route::patch('webhooks/{webhook}', [WebhookApiController::class, 'update'])
+                ->name('api.v1.webhooks.update');
+            Route::post('webhooks/{webhook}/rotate-secret', [WebhookApiController::class, 'rotateSecret'])
+                ->name('api.v1.webhooks.rotate-secret');
+            Route::post('webhooks/{webhook}/test', [WebhookApiController::class, 'sendTest'])
+                ->name('api.v1.webhooks.test');
+            Route::delete('webhooks/{webhook}', [WebhookApiController::class, 'destroy'])
+                ->name('api.v1.webhooks.destroy');
         });
     });
 });

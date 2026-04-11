@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CampaignSendController;
 use App\Http\Controllers\TrackingController;
+use App\Http\Controllers\WebhookSettingsController;
 use App\Models\Campaign;
 use Illuminate\Support\Facades\Route;
 
@@ -53,6 +54,24 @@ Route::middleware('auth')->group(function () {
         ->name('settings.api-token.generate');
     Route::post('settings/api-token/revoke', [ApiTokenController::class, 'revoke'])
         ->name('settings.api-token.revoke');
+
+    // Webhooks management UI
+    Route::get('settings/webhooks', [WebhookSettingsController::class, 'index'])
+        ->name('settings.webhooks.index');
+    Route::get('settings/webhooks/create', [WebhookSettingsController::class, 'create'])
+        ->name('settings.webhooks.create');
+    Route::post('settings/webhooks', [WebhookSettingsController::class, 'store'])
+        ->name('settings.webhooks.store');
+    Route::get('settings/webhooks/{webhook}', [WebhookSettingsController::class, 'show'])
+        ->name('settings.webhooks.show');
+    Route::post('settings/webhooks/{webhook}', [WebhookSettingsController::class, 'update'])
+        ->name('settings.webhooks.update');
+    Route::post('settings/webhooks/{webhook}/delete', [WebhookSettingsController::class, 'destroy'])
+        ->name('settings.webhooks.destroy');
+    Route::post('settings/webhooks/{webhook}/rotate-secret', [WebhookSettingsController::class, 'rotateSecret'])
+        ->name('settings.webhooks.rotate-secret');
+    Route::post('settings/webhooks/{webhook}/test', [WebhookSettingsController::class, 'sendTest'])
+        ->name('settings.webhooks.test');
 
     Route::resource('campaigns', CampaignController::class)->only([
         'index', 'create', 'store', 'show',

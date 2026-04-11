@@ -16,3 +16,7 @@ Schedule::command('campaigns:process-followups')
 Schedule::command('campaigns:wipe-expired-keys')
     ->hourly()
     ->withoutOverlapping();
+
+Schedule::command('webhooks:prune-deliveries')
+    ->daily()
+    ->withoutOverlapping();

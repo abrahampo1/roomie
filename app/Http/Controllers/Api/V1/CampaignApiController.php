@@ -14,6 +14,7 @@ use App\Services\Email\CampaignSender;
 use App\Services\Email\RecipientSelector;
 use App\Services\LLM\LlmClientFactory;
 use App\Services\MarketIntelligence\MarketIntelligenceService;
+use App\Services\Webhooks\WebhookDispatcher;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -73,6 +74,10 @@ class CampaignApiController extends Controller
             'api_key_retained_for_followups' => true,
             'api_key_retention_expires_at' => now()->addDays($retentionDays),
             'status' => 'pending',
+        ]);
+
+        WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.created', [
+            'campaign' => (new CampaignResource($campaign))->toArray($request),
         ]);
 
         RunCampaignPipeline::dispatch($campaign);
@@ -200,6 +205,12 @@ class CampaignApiController extends Controller
 
         $created = $this->sender->dispatchInitialSend($campaign, $customers);
 
+        WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.send_started', [
+            'campaign_id' => $campaign->id,
+            'dispatched' => $created,
+            'total_queued' => $campaign->recipients()->count(),
+        ]);
+
         return response()->json([
             'dispatched' => $created,
             'total_queued' => $campaign->recipients()->count(),
@@ -241,10 +252,16 @@ class CampaignApiController extends Controller
             $campaign->api_model,
         );
 
-        $pipeline = new CampaignPipeline($client, new MarketIntelligenceService());
+        $pipeline = new CampaignPipeline($client, new MarketIntelligenceService);
         $newCreative = $pipeline->refineCreative($campaign, $validated['refinement_prompt']);
 
         $campaign->update(['creative' => $newCreative]);
+
+        WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.creative_refined', [
+            'campaign_id' => $campaign->id,
+            'creative' => $newCreative,
+            'instructions' => $validated['refinement_prompt'],
+        ]);
 
         return new CampaignResource($campaign->fresh());
     }

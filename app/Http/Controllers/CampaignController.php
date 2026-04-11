@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Resources\CampaignResource;
 use App\Jobs\RunCampaignPipeline;
 use App\Models\Campaign;
 use App\Models\Customer;
@@ -9,6 +10,7 @@ use App\Models\Hotel;
 use App\Services\Campaign\CampaignPipeline;
 use App\Services\LLM\LlmClientFactory;
 use App\Services\MarketIntelligence\MarketIntelligenceService;
+use App\Services\Webhooks\WebhookDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -63,6 +65,10 @@ class CampaignController extends Controller
             'status' => 'pending',
         ]);
 
+        WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.created', [
+            'campaign' => (new CampaignResource($campaign))->toArray($request),
+        ]);
+
         RunCampaignPipeline::dispatch($campaign);
 
         return redirect()->route('campaigns.show', $campaign)
@@ -96,6 +102,12 @@ class CampaignController extends Controller
             $newCreative = $pipeline->refineCreative($campaign, $validated['refinement_prompt']);
 
             $campaign->update(['creative' => $newCreative]);
+
+            WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.creative_refined', [
+                'campaign_id' => $campaign->id,
+                'creative' => $newCreative,
+                'instructions' => $validated['refinement_prompt'],
+            ]);
         } catch (\Throwable $e) {
             return redirect()
                 ->route('campaigns.show', $campaign)

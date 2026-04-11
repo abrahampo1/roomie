@@ -2,8 +2,11 @@
 
 namespace App\Services\Email;
 
+use App\Http\Resources\CampaignRecipientResource;
 use App\Models\CampaignRecipient;
 use App\Models\EmailUnsubscribe;
+use App\Services\Webhooks\WebhookDispatcher;
+use Illuminate\Http\Request;
 
 class EmailTrackingService
 {
@@ -75,16 +78,26 @@ class EmailTrackingService
      */
     public function recordOpen(CampaignRecipient $recipient): void
     {
+        $wasFirst = $recipient->first_opened_at === null;
+
         $update = [
             'opens_count' => $recipient->opens_count + 1,
             'last_opened_at' => now(),
         ];
 
-        if ($recipient->first_opened_at === null) {
+        if ($wasFirst) {
             $update['first_opened_at'] = now();
         }
 
         $recipient->update($update);
+
+        // Only fire the webhook on the FIRST open so downstream systems
+        // don't get spammed every time a mail client re-fetches the pixel.
+        if ($wasFirst) {
+            WebhookDispatcher::dispatchRecipientEvent($recipient->fresh(), 'recipient.opened', [
+                'recipient' => (new CampaignRecipientResource($recipient->fresh()))->toArray(new Request),
+            ]);
+        }
     }
 
     /**
@@ -94,21 +107,36 @@ class EmailTrackingService
      */
     public function recordClick(CampaignRecipient $recipient): void
     {
+        $wasFirstClick = $recipient->first_clicked_at === null;
+        $wasFirstConversion = $recipient->converted_at === null;
+
         $update = [
             'clicks_count' => $recipient->clicks_count + 1,
             'last_clicked_at' => now(),
         ];
 
-        if ($recipient->first_clicked_at === null) {
+        if ($wasFirstClick) {
             $update['first_clicked_at'] = now();
         }
 
-        if ($recipient->converted_at === null) {
+        if ($wasFirstConversion) {
             $update['converted_at'] = now();
             $update['status'] = 'converted';
         }
 
         $recipient->update($update);
+
+        if ($wasFirstClick) {
+            WebhookDispatcher::dispatchRecipientEvent($recipient->fresh(), 'recipient.clicked', [
+                'recipient' => (new CampaignRecipientResource($recipient->fresh()))->toArray(new Request),
+            ]);
+        }
+
+        if ($wasFirstConversion) {
+            WebhookDispatcher::dispatchRecipientEvent($recipient->fresh(), 'recipient.converted', [
+                'recipient' => (new CampaignRecipientResource($recipient->fresh()))->toArray(new Request),
+            ]);
+        }
     }
 
     /**
@@ -129,5 +157,9 @@ class EmailTrackingService
                 'reason' => 'user_clicked',
             ],
         );
+
+        WebhookDispatcher::dispatchRecipientEvent($recipient->fresh(), 'recipient.unsubscribed', [
+            'recipient' => (new CampaignRecipientResource($recipient->fresh()))->toArray(new Request),
+        ]);
     }
 }

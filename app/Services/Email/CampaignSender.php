@@ -2,6 +2,7 @@
 
 namespace App\Services\Email;
 
+use App\Http\Resources\CampaignRecipientResource;
 use App\Jobs\SendCampaignJob;
 use App\Jobs\SimulateRecipientEngagementJob;
 use App\Mail\CampaignEmail;
@@ -9,6 +10,8 @@ use App\Models\Campaign;
 use App\Models\CampaignRecipient;
 use App\Models\Customer;
 use App\Models\EmailUnsubscribe;
+use App\Services\Webhooks\WebhookDispatcher;
+use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -106,6 +109,12 @@ class CampaignSender
                 'error' => $e->getMessage(),
             ]);
 
+            WebhookDispatcher::dispatchRecipientEvent($recipient->fresh(), 'recipient.bounced', [
+                'recipient' => (new CampaignRecipientResource($recipient->fresh()))->toArray(new Request),
+                'error' => mb_substr($e->getMessage(), 0, 500),
+                'attempt' => (int) $recipient->attempts_sent,
+            ]);
+
             return false;
         }
 
@@ -113,6 +122,11 @@ class CampaignSender
             'status' => 'sent',
             'last_sent_at' => now(),
             'attempts_sent' => $recipient->attempts_sent + 1,
+        ]);
+
+        WebhookDispatcher::dispatchRecipientEvent($recipient->fresh(), 'recipient.sent', [
+            'recipient' => (new CampaignRecipientResource($recipient->fresh()))->toArray(new Request),
+            'attempt' => (int) $recipient->fresh()->attempts_sent,
         ]);
 
         // Demo mode: schedule a simulated engagement job so the dashboard

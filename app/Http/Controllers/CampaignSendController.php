@@ -7,6 +7,7 @@ use App\Models\CampaignRecipient;
 use App\Services\Email\CampaignSender;
 use App\Services\Email\CampaignStatsService;
 use App\Services\Email\RecipientSelector;
+use App\Services\Webhooks\WebhookDispatcher;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -22,7 +23,7 @@ class CampaignSendController extends Controller
     {
         abort_unless($campaign->user_id === auth()->id(), 403);
 
-        $statsService = new CampaignStatsService();
+        $statsService = new CampaignStatsService;
         $stats = $statsService->forCampaign($campaign);
         $funnel = $statsService->funnelFor($campaign);
         $timeSeries = $statsService->timeSeriesFor($campaign);
@@ -124,6 +125,12 @@ class CampaignSendController extends Controller
         }
 
         $created = $this->sender->dispatchInitialSend($campaign, $customers);
+
+        WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.send_started', [
+            'campaign_id' => $campaign->id,
+            'dispatched' => $created,
+            'total_queued' => $campaign->recipients()->count(),
+        ]);
 
         $message = $created > 0
             ? "Enviando a {$created} destinatarios. Los emails se escriben al log en modo demo."

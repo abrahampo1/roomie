@@ -2,11 +2,14 @@
 
 namespace App\Services\Campaign;
 
+use App\Http\Resources\CampaignResource;
 use App\Models\Campaign;
 use App\Models\Customer;
 use App\Models\Hotel;
 use App\Services\LLM\LlmClient;
 use App\Services\MarketIntelligence\MarketIntelligenceService;
+use App\Services\Webhooks\WebhookDispatcher;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
 class CampaignPipeline
@@ -34,18 +37,38 @@ class CampaignPipeline
 
             $analysis = $this->runAnalyst($campaign->objective, $hotelsContext, $customersContext, $marketContext);
             $campaign->update(['analysis' => $analysis]);
+            WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.analysis_completed', [
+                'campaign_id' => $campaign->id,
+                'analysis' => $analysis,
+            ]);
 
             $strategy = $this->runStrategist($campaign->objective, $analysis, $hotelsContext, $marketContext);
             $campaign->update(['strategy' => $strategy]);
+            WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.strategy_completed', [
+                'campaign_id' => $campaign->id,
+                'strategy' => $strategy,
+            ]);
 
             $creative = $this->runCreative($campaign->objective, $strategy);
             $campaign->update(['creative' => $creative]);
+            WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.creative_completed', [
+                'campaign_id' => $campaign->id,
+                'creative' => $creative,
+            ]);
 
             $audit = $this->runAuditor($campaign->objective, $strategy, $creative);
             $campaign->update([
                 'audit' => $audit,
                 'quality_score' => $audit['quality_score'] ?? null,
                 'status' => 'completed',
+            ]);
+            WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.audit_completed', [
+                'campaign_id' => $campaign->id,
+                'audit' => $audit,
+                'quality_score' => $audit['quality_score'] ?? null,
+            ]);
+            WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.completed', [
+                'campaign' => (new CampaignResource($campaign->fresh()))->toArray(new Request),
             ]);
         } catch (\Throwable $e) {
             Log::error('Campaign pipeline failed', [
@@ -54,6 +77,10 @@ class CampaignPipeline
             ]);
 
             $campaign->update(['status' => 'failed']);
+            WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.failed', [
+                'campaign_id' => $campaign->id,
+                'error' => $e->getMessage(),
+            ]);
 
             throw $e;
         }
@@ -522,10 +549,10 @@ class CampaignPipeline
             $features = implode(', ', array_filter([$beach, $mountain]));
 
             return "{$h->name} ({$h->brand} {$h->stars}★) - {$h->city_name}, {$h->country_id} | "
-                . "{$h->num_rooms} hab | Clima: {$h->city_climate} {$h->city_avg_temperature}°C | "
-                . "Lluvia: {$h->city_rain_risk} | Patrimonio: {$h->city_historical_heritage} | "
-                . "Precio: {$h->city_price_level} | Gastronomía: {$h->city_gastronomy}"
-                . ($features ? " | {$features}" : '');
+                ."{$h->num_rooms} hab | Clima: {$h->city_climate} {$h->city_avg_temperature}°C | "
+                ."Lluvia: {$h->city_rain_risk} | Patrimonio: {$h->city_historical_heritage} | "
+                ."Precio: {$h->city_price_level} | Gastronomía: {$h->city_gastronomy}"
+                .($features ? " | {$features}" : '');
         })->implode("\n");
     }
 
@@ -537,10 +564,10 @@ class CampaignPipeline
             ->get()
             ->map(function ($c) {
                 return "Guest {$c->guest_id} ({$c->country_guest}, {$c->gender}, {$c->age_range}) | "
-                    . "Estancias 2y: {$c->last_2_years_stays} | Reservas: {$c->confirmed_reservations} | "
-                    . "Hoteles distintos: {$c->num_distinct_hotels} | ADR: {$c->confirmed_reservations_adr}€ | "
-                    . "Estancia media: {$c->avg_length_stay} noches | Lead time: {$c->avg_booking_leadtime} días | "
-                    . "Score: {$c->avg_score} | Último hotel: {$c->hotel_external_id} ({$c->checkin_date->format('Y-m-d')})";
+                    ."Estancias 2y: {$c->last_2_years_stays} | Reservas: {$c->confirmed_reservations} | "
+                    ."Hoteles distintos: {$c->num_distinct_hotels} | ADR: {$c->confirmed_reservations_adr}€ | "
+                    ."Estancia media: {$c->avg_length_stay} noches | Lead time: {$c->avg_booking_leadtime} días | "
+                    ."Score: {$c->avg_score} | Último hotel: {$c->hotel_external_id} ({$c->checkin_date->format('Y-m-d')})";
             })->implode("\n");
     }
 }

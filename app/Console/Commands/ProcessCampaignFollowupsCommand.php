@@ -8,6 +8,7 @@ use App\Models\CampaignRecipient;
 use App\Services\Campaign\CampaignPipeline;
 use App\Services\LLM\LlmClientFactory;
 use App\Services\MarketIntelligence\MarketIntelligenceService;
+use App\Services\Webhooks\WebhookDispatcher;
 use Illuminate\Console\Command;
 use Throwable;
 
@@ -79,6 +80,12 @@ class ProcessCampaignFollowupsCommand extends Command
                     ->delay(now()->addSeconds($index * 5));
             }
 
+            WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.followup_started', [
+                'campaign_id' => $campaign->id,
+                'attempt' => $attempt,
+                'recipient_count' => count($ids),
+            ]);
+
             $cooldownHours = max(1, (int) $campaign->followup_cooldown_hours);
             $nextEligibleAt = now()->addHours($cooldownHours * $attempt);
             foreach ($recipients as $recipient) {
@@ -106,7 +113,7 @@ class ProcessCampaignFollowupsCommand extends Command
                 $campaign->api_base_url,
                 $campaign->api_model,
             );
-            $pipeline = new CampaignPipeline($client, new MarketIntelligenceService());
+            $pipeline = new CampaignPipeline($client, new MarketIntelligenceService);
             $creative = $pipeline->regenerateForFollowup($campaign, $attempt);
 
             $variants[$attempt] = $creative;
