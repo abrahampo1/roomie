@@ -1,0 +1,176 @@
+Roomie Source-Available License
+===============================
+
+Copyright (c) 2026 Abraham Leiro
+
+Preámbulo (español)
+-------------------
+
+Roomie es software "source-available". Puedes leer el código, auditarlo,
+modificarlo y usarlo para fines personales o sin ánimo de lucro sin pagar
+nada. Para usarlo con fines comerciales necesitas una licencia comercial
+separada y pagada al autor. Las contribuciones al proyecto son bienvenidas
+y se rigen por los mismos términos.
+
+Este texto en español es una guía. En caso de conflicto, prevalece el
+texto en inglés que aparece a continuación.
+
+Preamble (English)
+------------------
+
+Roomie is source-available software. You may read, audit, modify, and
+use it for Personal Purposes or Non-Commercial Purposes at no cost.
+Commercial Use requires a separate, paid commercial license granted by
+the Author. Contributions are welcome and are governed by this same
+license.
+
+
+1. Grant of Rights
+------------------
+
+Subject to the terms below, the Author grants You a worldwide,
+royalty-free, non-exclusive, non-transferable license to:
+
+  (a) View and audit the source code of the Software;
+
+  (b) Use the Software for Personal Purposes and Non-Commercial
+      Purposes;
+
+  (c) Modify the Software and create derivative works for Personal
+      Purposes and Non-Commercial Purposes;
+
+  (d) Distribute unmodified or modified copies of the Software,
+      provided that every recipient receives a copy of this license
+      unchanged, the copyright notice is preserved, and the recipient's
+      intended use is Personal or Non-Commercial;
+
+  (e) Submit contributions (patches, pull requests, issues) to the
+      upstream project hosted by the Author.
+
+
+2. Definitions
+--------------
+
+"Software" means the source code, compiled artifacts, assets, and
+documentation distributed under this license, including the "Roomie"
+project and any file that references this license.
+
+"Author" means Abraham Leiro, the copyright holder.
+
+"You" means any individual or legal entity exercising rights under
+this license.
+
+"Personal Purposes" means use by a natural person for private,
+non-professional activities, including learning, experimentation,
+hobby projects, and private research.
+
+"Non-Commercial Purposes" means any use that does not directly or
+indirectly generate revenue, commercial advantage, or monetary
+compensation for You or for any third party. Non-Commercial Purposes
+include academic use by students and teachers, research at
+non-profit institutions, and internal tooling inside registered
+non-profit organizations.
+
+"Commercial Use" means any use of the Software or its output that is
+neither Personal nor Non-Commercial. Commercial Use includes, without
+limitation:
+
+  - running the Software as part of a paid product or service;
+  - offering hosted instances of the Software to third parties
+    (Software-as-a-Service);
+  - using the Software within the internal operations of a for-profit
+    company, including internal tooling, even if not redistributed;
+  - using the output produced by the Software (including generated
+    marketing campaigns, emails, strategies, audits, and creative
+    content) in any revenue-generating activity;
+  - incorporating the Software or substantial portions of it into
+    another product that is distributed or operated commercially.
+
+
+3. Commercial Licensing
+-----------------------
+
+Commercial Use of the Software requires a separate, paid commercial
+license granted in writing by the Author. To obtain one, contact the
+Author at the address provided in the project's README.
+
+You may evaluate the Software for Commercial Use for a maximum of
+thirty (30) days from the date You first run it. After that period,
+continued Commercial Use without a signed commercial license is a
+violation of this license.
+
+
+4. Attribution
+--------------
+
+Any distribution of the Software or of a substantial portion of its
+source code must retain, unmodified:
+
+  (a) this LICENSE file, and
+  (b) the copyright notice "Copyright (c) 2026 Abraham Leiro".
+
+
+5. Contributions
+----------------
+
+By submitting a contribution (including but not limited to a pull
+request, patch, issue comment containing code, or any other form of
+contribution) to the upstream Roomie project, You agree that:
+
+  (a) Your contribution is licensed to the Author under the same
+      terms as this license;
+
+  (b) You grant the Author a perpetual, worldwide, non-exclusive,
+      royalty-free, irrevocable license to reproduce, modify, prepare
+      derivative works of, publicly display, publicly perform,
+      sublicense, and distribute Your contribution;
+
+  (c) The Author may relicense Your contribution, including under a
+      commercial license, without any additional permission or
+      compensation to You;
+
+  (d) You have the legal right to submit the contribution and the
+      contribution is Your original work or is based on work that You
+      are authorized to submit under these terms.
+
+
+6. No Trademark Rights
+----------------------
+
+This license does not grant You any rights to use the Author's name,
+logo, trademarks, or service marks, including but not limited to the
+name "Roomie" and the Roomie logo marks (the sparkle, the M, the R,
+the dot, and the full wordmark). Any such use requires separate
+written permission from the Author.
+
+
+7. No Warranty
+--------------
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+NON-INFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+CLAIM, DAMAGES, OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+TORT, OR OTHERWISE, ARISING FROM, OUT OF, OR IN CONNECTION WITH THE
+SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+
+8. Termination
+--------------
+
+If You violate any term of this license, Your rights under it
+terminate automatically. You may reinstate Your rights by ceasing the
+violation and obtaining written confirmation from the Author. Sections
+4 (Attribution), 6 (No Trademark Rights), 7 (No Warranty), and 9
+(Governing Law) survive termination.
+
+
+9. Governing Law
+----------------
+
+This license is governed by, and construed in accordance with, the
+laws of Spain, without regard to its conflict-of-law provisions. Any
+dispute arising under or in connection with this license shall be
+subject to the exclusive jurisdiction of the courts located at the
+Author's place of residence.

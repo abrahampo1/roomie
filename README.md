@@ -108,4 +108,17 @@ resources/views/
 
 ## Licencia
 
-Proyecto academico — Impacthon 2026.
+Roomie se distribuye bajo la **Roomie Source-Available License** (ver
+[`LICENSE`](LICENSE)).
+
+Resumen:
+
+- **Puedes** leer el código, auditarlo, modificarlo, ejecutarlo y usarlo para
+  fines personales, educativos, de investigación o sin ánimo de lucro.
+- **Puedes** contribuir mejoras al proyecto bajo los mismos términos.
+- **No puedes** usarlo con fines comerciales (producto de pago, SaaS, uso
+  interno en una empresa con ánimo de lucro, o cualquier actividad que
+  genere ingresos con el software o con su output) sin una licencia
+  comercial separada y pagada al autor.
+
+Para solicitar una licencia comercial, contacta con el autor.
