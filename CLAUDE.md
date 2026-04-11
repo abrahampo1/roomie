@@ -69,6 +69,8 @@ The form UI (`campaigns/create.blade.php`) caches keys in `localStorage` keyed b
 
 - **Scheduled commands run via `php artisan schedule:work`** during dev or a real cron in prod. `campaigns:process-followups` runs every 15 minutes with `withoutOverlapping(10)` so two ticks don't race on the same campaign. `campaigns:wipe-expired-keys` runs hourly as the retention-expiration safety net.
 
+- **Public HTTP API lives under `/api/v1`** with a dedicated `routes/api.php` wired via `bootstrap/app.php::withRouting(api: ...)`. Authentication is a custom Bearer scheme: each user generates a token from `/settings/api-token`, we store only its SHA-256 hash in `users.api_token` (unique indexed), and the `AuthenticateApiToken` middleware (aliased `api.token`) resolves it on every request. The plain token is shown exactly once at generation time — if the user loses it they must regenerate. `User::generateApiToken()`, `revokeApiToken()`, and `findByApiToken()` are the only entry points to that column; don't read `$user->api_token` directly anywhere else. Rate limits are `throttle:60,1` for reads and `throttle:20,1` for writes. Errors return a consistent `{ "error": "code", "message": "..." }` envelope (validation errors add a nested `errors` map). The API controllers in `app/Http/Controllers/Api/V1/` **delegate** to existing services (`CampaignStatsService`, `RecipientSelector`, `CampaignSender`) — they never duplicate business logic. The docs page at `/docs` is public Blade with no JS dep. Do NOT add Sanctum or any other auth package without explicit approval — the project is intentionally dep-minimal.
+
 ---
 
 <laravel-boost-guidelines>

@@ -41,8 +41,11 @@
             </a>
             <div class="flex items-center gap-3 sm:gap-5 text-sm">
                 @auth
-                    <a href="{{ route('campaigns.index') }}" class="text-navy/55 hover:text-navy transition -my-2 py-2 px-1">
+                    <a href="{{ route('campaigns.index') }}" class="hidden sm:inline text-navy/55 hover:text-navy transition -my-2 py-2 px-1">
                         Campañas
+                    </a>
+                    <a href="{{ route('settings.api-token.show') }}" class="hidden sm:inline text-navy/55 hover:text-navy transition -my-2 py-2 px-1">
+                        API
                     </a>
                     <form method="POST" action="{{ route('logout') }}" class="flex">
                         @csrf
@@ -54,6 +57,9 @@
                         Nueva
                     </a>
                 @else
+                    <a href="{{ route('docs') }}" class="hidden sm:inline text-navy/55 hover:text-navy transition -my-2 py-2 px-1">
+                        Docs
+                    </a>
                     <a href="{{ route('login') }}" class="text-navy/55 hover:text-navy transition -my-2 py-2 px-1">
                         Entrar
                     </a>
@@ -81,7 +87,10 @@
                 <p class="font-[Fredoka] font-semibold text-base">Roomie</p>
                 <p class="text-xs text-navy/45 mt-1">Reto Eurostars Hotel Company</p>
             </div>
-            <p class="text-xs text-navy/40 italic font-[Fredoka]">"Make me want to travel"</p>
+            <div class="flex items-baseline gap-5">
+                <a href="{{ route('docs') }}" class="text-xs text-navy/55 hover:text-navy transition">API docs</a>
+                <p class="text-xs text-navy/40 italic font-[Fredoka]">"Make me want to travel"</p>
+            </div>
         </div>
     </footer>
 

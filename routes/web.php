@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CampaignSendController;
@@ -10,6 +11,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+// Public API documentation — no auth.
+Route::view('/docs', 'docs.index')->name('docs');
 
 // Email tracking — PUBLIC routes hit from mail clients. Security comes from
 // the per-recipient 40-char `tracking_token` (240 bits of entropy). We
@@ -41,6 +45,14 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+
+    // API token management UI
+    Route::get('settings/api-token', [ApiTokenController::class, 'show'])
+        ->name('settings.api-token.show');
+    Route::post('settings/api-token', [ApiTokenController::class, 'generate'])
+        ->name('settings.api-token.generate');
+    Route::post('settings/api-token/revoke', [ApiTokenController::class, 'revoke'])
+        ->name('settings.api-token.revoke');
 
     Route::resource('campaigns', CampaignController::class)->only([
         'index', 'create', 'store', 'show',
