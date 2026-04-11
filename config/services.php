@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    'roomie' => [
+        // When false (the default), CampaignSender forces the 'log' mailer
+        // regardless of MAIL_MAILER — nothing leaves the host, the demo is
+        // safe by default. Flip to true only when you have consent from the
+        // recipients and a real MAIL_MAILER configured.
+        'allow_real_sends' => env('ROOMIE_ALLOW_REAL_SENDS', false),
+
+        // Hard cap on how long the user's API key may remain encrypted on
+        // the campaign row for autonomous follow-ups.
+        'followup_max_retention_days' => env('ROOMIE_FOLLOWUP_MAX_RETENTION_DAYS', 14),
+    ],
+
 ];

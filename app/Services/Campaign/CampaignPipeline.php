@@ -236,6 +236,101 @@ class CampaignPipeline
         return $this->client->complete($prompt, 'auditor');
     }
 
+    /**
+     * Re-runs the Creativo agent for a given follow-up attempt, escalating
+     * the intensity one notch per attempt (capped at 5). Reads the previous
+     * creative and any prior follow-up variants to avoid repetition, and
+     * returns the new creative array (same JSON schema as the original).
+     *
+     * The caller is responsible for persisting the result into
+     * `campaigns.followup_variants`.
+     *
+     * @return array<string, mixed>
+     */
+    public function regenerateForFollowup(Campaign $campaign, int $attempt): array
+    {
+        if ($attempt < 2 || $attempt > 5) {
+            throw new \InvalidArgumentException('Follow-up attempt must be between 2 and 5.');
+        }
+
+        $baseAggressiveness = (int) ($campaign->aggressiveness ?? 2);
+        $baseManipulation = (int) ($campaign->manipulation ?? 2);
+
+        $this->aggressiveness = min(5, $baseAggressiveness + $attempt - 1);
+        $this->manipulation = min(5, $baseManipulation + $attempt - 1);
+
+        return $this->runCreativeFollowup($campaign, $attempt);
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function runCreativeFollowup(Campaign $campaign, int $attempt): array
+    {
+        $strategy = $campaign->strategy ?? [];
+        $strategyJson = json_encode($strategy, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $intensity = $this->intensityGuidance();
+
+        $previousSubjects = [];
+        if (! empty($campaign->creative['subject_line'] ?? null)) {
+            $previousSubjects[] = '#1: "'.$campaign->creative['subject_line'].'"';
+        }
+        foreach (($campaign->followup_variants ?? []) as $n => $variant) {
+            if (! empty($variant['subject_line'] ?? null)) {
+                $previousSubjects[] = '#'.$n.': "'.$variant['subject_line'].'"';
+            }
+        }
+        $previousSubjectsList = $previousSubjects === []
+            ? '(ninguno)'
+            : implode("\n        ", $previousSubjects);
+
+        $objective = $campaign->objective;
+        $hotelName = $strategy['recommended_hotel']['name'] ?? 'el hotel destacado';
+        $hotelCity = $strategy['recommended_hotel']['city'] ?? '';
+
+        $prompt = <<<PROMPT
+        Eres el Agente Creativo de Roomie generando un EMAIL DE SEGUIMIENTO (intento #{$attempt}).
+        El cliente no ha reservado aún tras los intentos anteriores.
+
+        OBJETIVO DE NEGOCIO: {$objective}
+
+        ESTRATEGIA ORIGINAL:
+        {$strategyJson}
+
+        ASUNTOS YA ENVIADOS A ESTE CLIENTE (no repitas ninguno):
+            {$previousSubjectsList}
+
+        {$intensity}
+
+        REGLAS DEL SEGUIMIENTO:
+        - Reconoce implícitamente que ya se contactó ("Te escribimos de nuevo", "Sigue disponible...").
+        - Este es el intento #{$attempt}, la urgencia y la presión DEBEN subir un escalón claro respecto al intento anterior.
+        - Si el intento es 4 o 5, introduce exclusividad explícita o "última oportunidad".
+        - Mantén el mismo hotel destacado ({$hotelName}, {$hotelCity}) y la misma promesa de valor.
+        - No repitas el subject_line ni el headline de intentos anteriores.
+
+        Genera el contenido creativo. Responde en JSON con esta estructura EXACTA (misma que el creativo original):
+        {
+            "subject_line": "asunto del email",
+            "preview_text": "texto de preview (max 90 chars)",
+            "headline": "titulo principal del email",
+            "body_html": "contenido HTML del cuerpo del email con estilos inline, max 300 palabras, colores #1a1a2e y #c8956c. Incluye un CTA claro.",
+            "cta_text": "texto del boton CTA",
+            "cta_url_slug": "slug para la URL de destino",
+            "alt_formats": {
+                "push_notification": "texto de push (max 100 chars)",
+                "sms": "texto de SMS (max 160 chars)",
+                "social_caption": "caption para redes sociales"
+            },
+            "visual_direction": "descripcion de la direccion visual sugerida"
+        }
+
+        Responde SOLO el JSON, sin markdown ni explicaciones. El body_html debe ser HTML valido con estilos inline.
+        PROMPT;
+
+        return $this->client->complete($prompt, 'creative-followup');
+    }
+
     private function intensityGuidance(): string
     {
         $aggressivenessLevels = [

@@ -2,12 +2,31 @@
 
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\CampaignSendController;
+use App\Http\Controllers\TrackingController;
 use App\Models\Campaign;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 })->name('home');
+
+// Email tracking — PUBLIC routes hit from mail clients. Pixel is token-only
+// (Gmail proxy strips signed query strings). Click and unsubscribe are signed.
+Route::get('/t/o/{recipient}/{token}', [TrackingController::class, 'open'])
+    ->name('tracking.open');
+
+Route::get('/t/c/{recipient}/{token}', [TrackingController::class, 'click'])
+    ->middleware('signed')
+    ->name('tracking.click');
+
+Route::get('/t/u/{recipient}/{token}', [TrackingController::class, 'unsubscribe'])
+    ->middleware('signed')
+    ->name('tracking.unsubscribe');
+
+Route::post('/t/u/{recipient}/{token}', [TrackingController::class, 'unsubscribeConfirm'])
+    ->middleware('signed')
+    ->name('tracking.unsubscribe.confirm');
 
 Route::middleware('guest')->group(function () {
     Route::get('login', [AuthController::class, 'showLogin'])->name('login');
@@ -22,6 +41,18 @@ Route::middleware('auth')->group(function () {
     Route::resource('campaigns', CampaignController::class)->only([
         'index', 'create', 'store', 'show',
     ]);
+
+    Route::post('campaigns/{campaign}/send', [CampaignSendController::class, 'send'])
+        ->name('campaigns.send');
+
+    Route::get('campaigns/{campaign}/stats', [CampaignSendController::class, 'stats'])
+        ->name('campaigns.stats');
+
+    Route::post('campaigns/{campaign}/recipients/{recipient}/toggle-conversion', [CampaignSendController::class, 'toggleConversion'])
+        ->name('campaigns.recipients.toggle-conversion');
+
+    Route::post('campaigns/{campaign}/stop-followups', [CampaignSendController::class, 'stopFollowups'])
+        ->name('campaigns.stop-followups');
 
     Route::get('campaigns/{campaign}/status', function (Campaign $campaign) {
         abort_unless($campaign->user_id === auth()->id(), 403);

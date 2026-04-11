@@ -6,6 +6,7 @@ use App\Jobs\RunCampaignPipeline;
 use App\Models\Campaign;
 use App\Models\Customer;
 use App\Models\Hotel;
+use App\Services\Email\CampaignStatsService;
 use App\Services\LLM\LlmClientFactory;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -66,6 +67,15 @@ class CampaignController extends Controller
     {
         abort_unless($campaign->user_id === auth()->id(), 403);
 
-        return view('campaigns.show', compact('campaign'));
+        $stats = null;
+        $recipients = null;
+        if ($campaign->send_enabled) {
+            $stats = (new CampaignStatsService())->forCampaign($campaign);
+            $recipients = $campaign->recipients()
+                ->orderByDesc('last_sent_at')
+                ->paginate(25);
+        }
+
+        return view('campaigns.show', compact('campaign', 'stats', 'recipients'));
     }
 }

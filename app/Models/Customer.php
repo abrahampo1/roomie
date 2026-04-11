@@ -7,7 +7,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 #[Fillable([
-    'guest_id', 'country_guest', 'gender', 'age_range',
+    'guest_id', 'email', 'first_name',
+    'country_guest', 'gender', 'age_range',
     'last_2_years_stays', 'confirmed_reservations', 'num_distinct_hotels',
     'confirmed_reservations_adr', 'avg_length_stay', 'avg_booking_leadtime',
     'avg_score', 'reservation_id', 'checkin_date', 'checkout_date',

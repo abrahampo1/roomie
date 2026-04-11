@@ -514,6 +514,8 @@
                 @endif
             </section>
         @endif
+
+        @include('campaigns._send_drawer')
     @endif
 
     @if ($campaign->isFailed())

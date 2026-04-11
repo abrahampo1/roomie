@@ -7,6 +7,20 @@ use Illuminate\Database\Seeder;
 
 class CustomerSeeder extends Seeder
 {
+    /**
+     * Pool of Spanish first names used to derive a deterministic `first_name`
+     * per guest so a re-seed always produces the same data.
+     *
+     * @var array<int, string>
+     */
+    private const FIRST_NAME_POOL = [
+        'Marta', 'Álvaro', 'Lucía', 'Javier', 'Sofía', 'Carlos', 'Elena',
+        'Miguel', 'Paula', 'Daniel', 'Ana', 'Jorge', 'Laura', 'David',
+        'Carmen', 'Pablo', 'Isabel', 'Andrés', 'Nuria', 'Sergio',
+        'Beatriz', 'Raúl', 'Cristina', 'Óscar', 'Natalia', 'Iván',
+        'Silvia', 'Adrián', 'Patricia', 'Marcos',
+    ];
+
     public function run(): void
     {
         $csv = file(database_path('data/customer_data_200.csv'));
@@ -22,9 +36,15 @@ class CustomerSeeder extends Seeder
                 continue;
             }
 
+            $guestId = (string) $fields[0];
+
             Customer::updateOrCreate(
-                ['guest_id' => $fields[0], 'reservation_id' => $fields[11]],
+                ['guest_id' => $guestId, 'reservation_id' => $fields[11]],
                 [
+                    'email' => 'guest'.$guestId.'@example.invalid',
+                    'first_name' => self::FIRST_NAME_POOL[
+                        ((int) $guestId) % count(self::FIRST_NAME_POOL)
+                    ],
                     'country_guest' => $fields[1],
                     'gender' => $fields[2],
                     'age_range' => $fields[3],
