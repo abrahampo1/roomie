@@ -72,9 +72,21 @@ class CampaignController extends Controller
         abort_unless($campaign->user_id === auth()->id(), 403);
 
         $stats = null;
+        $funnel = null;
+        $timeSeries = null;
+        $countryBreakdown = null;
+        $segmentBreakdown = null;
+        $followupPerformance = null;
         $recipients = null;
+
         if ($campaign->send_enabled) {
-            $stats = (new CampaignStatsService())->forCampaign($campaign);
+            $statsService = new CampaignStatsService();
+            $stats = $statsService->forCampaign($campaign);
+            $funnel = $statsService->funnelFor($campaign);
+            $timeSeries = $statsService->timeSeriesFor($campaign);
+            $countryBreakdown = $statsService->countryBreakdownFor($campaign);
+            $segmentBreakdown = $statsService->segmentBreakdownFor($campaign);
+            $followupPerformance = $statsService->followupPerformanceFor($campaign);
             $recipients = $campaign->recipients()
                 ->orderByDesc('last_sent_at')
                 ->paginate(25);
@@ -82,6 +94,16 @@ class CampaignController extends Controller
 
         $maxRecipients = Customer::query()->whereNotNull('email')->count();
 
-        return view('campaigns.show', compact('campaign', 'stats', 'recipients', 'maxRecipients'));
+        return view('campaigns.show', compact(
+            'campaign',
+            'stats',
+            'funnel',
+            'timeSeries',
+            'countryBreakdown',
+            'segmentBreakdown',
+            'followupPerformance',
+            'recipients',
+            'maxRecipients',
+        ));
     }
 }

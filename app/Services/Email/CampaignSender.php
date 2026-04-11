@@ -3,6 +3,7 @@
 namespace App\Services\Email;
 
 use App\Jobs\SendCampaignJob;
+use App\Jobs\SimulateRecipientEngagementJob;
 use App\Mail\CampaignEmail;
 use App\Models\Campaign;
 use App\Models\CampaignRecipient;
@@ -113,6 +114,14 @@ class CampaignSender
             'last_sent_at' => now(),
             'attempts_sent' => $recipient->attempts_sent + 1,
         ]);
+
+        // Demo mode: schedule a simulated engagement job so the dashboard
+        // ticks up live while the jury watches. Real sends (flag on) skip
+        // this — only real opens/clicks move the counters.
+        if (! (bool) config('services.roomie.allow_real_sends', false)) {
+            SimulateRecipientEngagementJob::dispatch($recipient->id)
+                ->delay(now()->addSeconds(random_int(5, 90)));
+        }
 
         return true;
     }

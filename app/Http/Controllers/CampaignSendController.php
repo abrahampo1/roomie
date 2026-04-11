@@ -22,12 +22,28 @@ class CampaignSendController extends Controller
     {
         abort_unless($campaign->user_id === auth()->id(), 403);
 
-        $stats = (new CampaignStatsService())->forCampaign($campaign);
+        $statsService = new CampaignStatsService();
+        $stats = $statsService->forCampaign($campaign);
+        $funnel = $statsService->funnelFor($campaign);
+        $timeSeries = $statsService->timeSeriesFor($campaign);
+        $countryBreakdown = $statsService->countryBreakdownFor($campaign);
+        $segmentBreakdown = $statsService->segmentBreakdownFor($campaign);
+        $followupPerformance = $statsService->followupPerformanceFor($campaign);
+
         $recipients = $campaign->recipients()
             ->orderByDesc('last_sent_at')
             ->paginate(25);
 
-        return view('campaigns._stats_section', compact('campaign', 'stats', 'recipients'));
+        return view('campaigns._stats_section', compact(
+            'campaign',
+            'stats',
+            'funnel',
+            'timeSeries',
+            'countryBreakdown',
+            'segmentBreakdown',
+            'followupPerformance',
+            'recipients',
+        ));
     }
 
     public function toggleConversion(Campaign $campaign, CampaignRecipient $recipient): RedirectResponse

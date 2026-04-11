@@ -45,7 +45,16 @@
         </div>
 
         @if (! empty($stats) && ! empty($recipients))
-            @include('campaigns._stats_section', ['campaign' => $campaign, 'stats' => $stats, 'recipients' => $recipients])
+            @include('campaigns._stats_section', [
+                'campaign' => $campaign,
+                'stats' => $stats,
+                'funnel' => $funnel,
+                'timeSeries' => $timeSeries,
+                'countryBreakdown' => $countryBreakdown,
+                'segmentBreakdown' => $segmentBreakdown,
+                'followupPerformance' => $followupPerformance,
+                'recipients' => $recipients,
+            ])
         @endif
     @else
         <h2 class="font-[Fredoka] font-semibold text-2xl sm:text-3xl leading-tight mb-3 max-w-2xl">
