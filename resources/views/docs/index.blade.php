@@ -102,7 +102,7 @@ CAMPAIGN_ID=$(curl -s -X POST $BASE/campaigns \
     "name": "Junio cultural Granada",
     "objective": "Subir la ocupación del Aurea Catedral en Granada durante junio",
     "aggressiveness": 2,
-    "manipulation": 2,
+    "persuasion_patterns": 2,
     "provider": "anthropic",
     "api_key": "sk-ant-api03-..."
   }' | jq -r .id)
@@ -211,7 +211,7 @@ curl $BASE/campaigns/$CAMPAIGN_ID/stats \
                             <td class="py-2">Entero 0–5. 0 = informativa, 5 = agresiva.</td>
                         </tr>
                         <tr class="border-b border-navy/10">
-                            <td class="py-2 pr-4 font-mono text-xs"><code>manipulation</code></td>
+                            <td class="py-2 pr-4 font-mono text-xs"><code>persuasion_patterns</code></td>
                             <td class="py-2">Entero 0–5. 0 = neutral, 5 = dark patterns.</td>
                         </tr>
                         <tr class="border-b border-navy/10">

@@ -105,22 +105,22 @@
                         </div>
                     </div>
 
-                    {{-- Manipulation --}}
+                    {{-- Persuasion patterns --}}
                     <div>
                         <div class="flex items-baseline justify-between gap-3 mb-2">
-                            <label for="manipulation" class="text-sm font-medium">Manipulación</label>
+                            <label for="persuasion_patterns" class="text-sm font-medium">Patrones de persuasión</label>
                             <span class="text-xs text-navy/55 font-mono tabular-nums">
-                                <span id="manipulation-value">{{ old('manipulation', 2) }}</span>/5 · <span id="manipulation-label" class="text-navy">Con urgencia</span>
+                                <span id="persuasion_patterns-value">{{ old('persuasion_patterns', 2) }}</span>/5 · <span id="persuasion_patterns-label" class="text-navy">Con urgencia</span>
                             </span>
                         </div>
                         <input
                             type="range"
-                            name="manipulation"
-                            id="manipulation"
+                            name="persuasion_patterns"
+                            id="persuasion_patterns"
                             min="0"
                             max="5"
                             step="1"
-                            value="{{ old('manipulation', 2) }}"
+                            value="{{ old('persuasion_patterns', 2) }}"
                             class="w-full h-1.5 bg-navy/10 rounded-full appearance-none cursor-pointer accent-copper"
                         >
                         <div class="flex justify-between text-[10px] text-navy/35 mt-1.5 font-mono uppercase tracking-wider">
@@ -244,7 +244,7 @@
     <script>
         (function () {
             const aggressivenessLabels = ['Informativa', 'Invitación', 'Equilibrada', 'Persuasiva', 'Insistente', 'Agresiva'];
-            const manipulationLabels  = ['Neutral', 'Sutil', 'Con urgencia', 'Con FOMO', 'Con presión', 'Dark patterns'];
+            const persuasionPatternsLabels = ['Neutral', 'Sutil', 'Con urgencia', 'Con FOMO', 'Con presión', 'Dark patterns'];
 
             function wireSlider(inputId, labels) {
                 const input = document.getElementById(inputId);
@@ -261,7 +261,7 @@
             }
 
             wireSlider('aggressiveness', aggressivenessLabels);
-            wireSlider('manipulation', manipulationLabels);
+            wireSlider('persuasion_patterns', persuasionPatternsLabels);
         })();
 
         (function () {
