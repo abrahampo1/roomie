@@ -27,7 +27,7 @@ function makeTrackedRecipient(array $events = ['*']): array
         'objective' => 'test objective here',
         'status' => 'completed',
         'aggressiveness' => 2,
-        'manipulation' => 2,
+        'persuasion_patterns' => 2,
     ]);
 
     $recipient = CampaignRecipient::create([

@@ -14,7 +14,7 @@
     }
 
     $agg = $campaign->aggressiveness ?? 2;
-    $man = $campaign->manipulation ?? 2;
+    $pat = $campaign->persuasion_patterns ?? 2;
 
     $pipelineSteps = [
         ['key' => 'analysis', 'name' => 'Analista', 'default' => 'Lee la base de clientes y los datos de reservas', 'stage' => 'Analizando los datos'],
@@ -154,7 +154,7 @@
                 {{ $statusLabels[$campaign->status] ?? $campaign->status }}
             </span>
             <span class="text-xs text-navy/50">
-                Agresividad <span class="font-mono text-navy">{{ $agg }}/5</span> · Manipulación <span class="font-mono text-navy">{{ $man }}/5</span>
+                Agresividad <span class="font-mono text-navy">{{ $agg }}/5</span> · Patrones de persuasión <span class="font-mono text-navy">{{ $pat }}/5</span>
             </span>
         </div>
     </header>

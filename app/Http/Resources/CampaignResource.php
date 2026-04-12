@@ -2,12 +2,13 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Campaign;
 use App\Services\LLM\LlmClientFactory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
- * @mixin \App\Models\Campaign
+ * @mixin Campaign
  */
 class CampaignResource extends JsonResource
 {
@@ -23,7 +24,7 @@ class CampaignResource extends JsonResource
             'status' => $this->status,
             'quality_score' => $this->quality_score,
             'aggressiveness' => $this->aggressiveness,
-            'manipulation' => $this->manipulation,
+            'persuasion_patterns' => $this->persuasion_patterns,
             'provider' => [
                 'id' => $this->api_provider,
                 'label' => $this->api_provider ? LlmClientFactory::label($this->api_provider) : null,

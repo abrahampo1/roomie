@@ -180,7 +180,7 @@
 
                 <div class="mt-6 space-y-5 pl-5 border-l-2 border-copper/40">
                     <p class="text-xs text-navy/55 leading-relaxed max-w-xl">
-                        Si los destinatarios no reaccionan, Roomie genera emails de seguimiento cada vez más insistentes (sube la agresividad y la manipulación +1 por intento, cap en 5) hasta que hagan click o se den de baja. Usan <strong class="text-navy">la misma IA que la campaña original</strong>@if ($providerDisplay) — <span class="font-mono text-navy">{{ $providerDisplay }}</span>@endif.
+                        Si los destinatarios no reaccionan, Roomie genera emails de seguimiento cada vez más insistentes (sube la agresividad y los patrones de persuasión +1 por intento, cap en 5) hasta que hagan click o se den de baja. Usan <strong class="text-navy">la misma IA que la campaña original</strong>@if ($providerDisplay) — <span class="font-mono text-navy">{{ $providerDisplay }}</span>@endif.
                     </p>
 
                     @if ($hasStoredKey)

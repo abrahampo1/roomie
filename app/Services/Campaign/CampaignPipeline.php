@@ -16,7 +16,7 @@ class CampaignPipeline
 {
     private int $aggressiveness = 2;
 
-    private int $manipulation = 2;
+    private int $persuasionPatterns = 2;
 
     public function __construct(
         private LlmClient $client,
@@ -28,7 +28,7 @@ class CampaignPipeline
         $campaign->update(['status' => 'processing']);
 
         $this->aggressiveness = (int) ($campaign->aggressiveness ?? 2);
-        $this->manipulation = (int) ($campaign->manipulation ?? 2);
+        $this->persuasionPatterns = (int) ($campaign->persuasion_patterns ?? 2);
 
         try {
             $hotelsContext = $this->buildHotelsContext();
@@ -219,7 +219,7 @@ class CampaignPipeline
             "visual_direction": "direccion visual/fotografica que acompañaria este email en un brief de diseño real"
         }
 
-        IMPORTANTE: adapta subject_line, headline, body_html y cta_text a los niveles de intensidad indicados. Si agresividad/manipulación son altas (4-5), el copy debe oler a urgencia, escasez numérica y FOMO concreto. Si son bajas (0-1), el copy es puramente editorial/informativo.
+        IMPORTANTE: adapta subject_line, headline, body_html y cta_text a los niveles de intensidad indicados. Si agresividad y patrones de persuasión son altos (4-5), el copy debe oler a urgencia, escasez numérica y FOMO concreto. Si son bajos (0-1), el copy es puramente editorial/informativo.
 
         Responde SOLO el JSON, sin markdown ni explicaciones. El body_html debe ser HTML válido con los estilos inline EXACTOS indicados en las directrices.
         PROMPT;
@@ -333,7 +333,7 @@ class CampaignPipeline
 
         {$intensity}
 
-        IMPORTANTE: Evalúa la campaña con los niveles de intensidad configurados en mente. No penalices una campaña por ser "demasiado agresiva" o "manipuladora" si el usuario pidió un nivel alto — en ese caso lo correcto es que lo sea. Penaliza solo la falta de coherencia con el nivel pedido (ej. pidieron 5/5 y el copy es blando).
+        IMPORTANTE: Evalúa la campaña con los niveles de intensidad configurados en mente. No penalices una campaña por ser "demasiado agresiva" o "demasiado persuasiva" si el usuario pidió un nivel alto — en ese caso lo correcto es que lo sea. Penaliza solo la falta de coherencia con el nivel pedido (ej. pidieron 5/5 y el copy es blando).
 
         Evalúa la campaña y responde en JSON con esta estructura exacta:
         {
@@ -374,10 +374,10 @@ class CampaignPipeline
         }
 
         $baseAggressiveness = (int) ($campaign->aggressiveness ?? 2);
-        $baseManipulation = (int) ($campaign->manipulation ?? 2);
+        $basePersuasionPatterns = (int) ($campaign->persuasion_patterns ?? 2);
 
         $this->aggressiveness = min(5, $baseAggressiveness + $attempt - 1);
-        $this->manipulation = min(5, $baseManipulation + $attempt - 1);
+        $this->persuasionPatterns = min(5, $basePersuasionPatterns + $attempt - 1);
 
         return $this->runCreativeFollowup($campaign, $attempt);
     }
@@ -451,7 +451,7 @@ class CampaignPipeline
     public function refineCreative(Campaign $campaign, string $refinementPrompt): array
     {
         $this->aggressiveness = (int) ($campaign->aggressiveness ?? 2);
-        $this->manipulation = (int) ($campaign->manipulation ?? 2);
+        $this->persuasionPatterns = (int) ($campaign->persuasion_patterns ?? 2);
 
         $strategy = $campaign->strategy ?? [];
         $currentCreative = $campaign->creative ?? [];
@@ -506,7 +506,7 @@ class CampaignPipeline
             5 => 'Máxima agresividad. No da tregua. Tono de cierre de venta, CTAs imperativos, urgencia temporal explícita.',
         ];
 
-        $manipulationLevels = [
+        $persuasionPatternsLevels = [
             0 => 'Sin técnicas psicológicas. Honesto, descriptivo, sin gatillos emocionales.',
             1 => 'Social proof sutil (ej. "muchos viajeros eligen junio en Granada").',
             2 => 'Urgencia ligera y escasez implícita (ej. "las mejores fechas se agotan pronto").',
@@ -516,12 +516,12 @@ class CampaignPipeline
         ];
 
         $agg = $aggressivenessLevels[$this->aggressiveness] ?? $aggressivenessLevels[2];
-        $man = $manipulationLevels[$this->manipulation] ?? $manipulationLevels[2];
+        $pat = $persuasionPatternsLevels[$this->persuasionPatterns] ?? $persuasionPatternsLevels[2];
 
         return <<<TXT
         INTENSIDAD DE LA CAMPAÑA (configurada por el usuario):
         - Agresividad: {$this->aggressiveness}/5 — {$agg}
-        - Manipulación: {$this->manipulation}/5 — {$man}
+        - Patrones de persuasión: {$this->persuasionPatterns}/5 — {$pat}
         TXT;
     }
 
