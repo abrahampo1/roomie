@@ -48,7 +48,7 @@ Cada agente recibe el output del anterior como contexto. El proveedor LLM se eli
 ## Instalación
 
 ```bash
-git clone <repo-url> roomie
+git clone https://github.com/abrahampo1/roomie roomie
 cd roomie
 
 composer install
