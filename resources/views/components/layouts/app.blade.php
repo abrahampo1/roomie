@@ -41,18 +41,44 @@
             </a>
             <div class="flex items-center gap-3 sm:gap-5 text-sm">
                 @auth
+                    <a href="{{ route('dashboard.index') }}" class="hidden sm:inline text-navy/55 hover:text-navy transition -my-2 py-2 px-1">
+                        Panel
+                    </a>
                     <a href="{{ route('campaigns.index') }}" class="hidden sm:inline text-navy/55 hover:text-navy transition -my-2 py-2 px-1">
                         Campañas
                     </a>
                     <a href="{{ route('settings.api-token.show') }}" class="hidden sm:inline text-navy/55 hover:text-navy transition -my-2 py-2 px-1">
-                        API
+                        Ajustes
                     </a>
-                    <form method="POST" action="{{ route('logout') }}" class="flex">
+                    <form method="POST" action="{{ route('logout') }}" class="hidden sm:flex">
                         @csrf
                         <button type="submit" class="text-navy/55 hover:text-navy transition -my-2 py-2 px-1 cursor-pointer">
                             Salir
                         </button>
                     </form>
+                    {{-- Mobile hamburger --}}
+                    <div class="relative sm:hidden" x-data="{ open: false }">
+                        <button @click="open = !open" class="text-navy/55 hover:text-navy transition -my-2 py-2 px-1">
+                            <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                                <path x-show="!open" stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                                <path x-show="open" x-cloak stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                        <div x-show="open" @click.away="open = false" x-cloak
+                             class="absolute right-0 top-full mt-2 w-48 rounded-xl border border-navy/15 bg-cream shadow-lg py-2 z-50">
+                            <a href="{{ route('dashboard.index') }}" class="block px-4 py-2 text-sm text-navy/70 hover:bg-navy/[0.04] transition">Panel</a>
+                            <a href="{{ route('campaigns.index') }}" class="block px-4 py-2 text-sm text-navy/70 hover:bg-navy/[0.04] transition">Campañas</a>
+                            <a href="{{ route('settings.brand.show') }}" class="block px-4 py-2 text-sm text-navy/70 hover:bg-navy/[0.04] transition">Marca</a>
+                            <a href="{{ route('settings.image-bank.index') }}" class="block px-4 py-2 text-sm text-navy/70 hover:bg-navy/[0.04] transition">Imágenes</a>
+                            <a href="{{ route('settings.api-token.show') }}" class="block px-4 py-2 text-sm text-navy/70 hover:bg-navy/[0.04] transition">API</a>
+                            <div class="border-t border-navy/10 mt-1 pt-1">
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit" class="block w-full text-left px-4 py-2 text-sm text-navy/55 hover:bg-navy/[0.04] transition cursor-pointer">Salir</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                     <a href="{{ route('campaigns.create') }}" class="bg-navy text-cream px-4 py-2.5 rounded-full hover:bg-navy-light transition">
                         Nueva
                     </a>

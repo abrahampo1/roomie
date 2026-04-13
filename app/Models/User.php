@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -34,6 +35,16 @@ class User extends Authenticatable
     public function webhooks(): HasMany
     {
         return $this->hasMany(Webhook::class);
+    }
+
+    public function brandSetting(): HasOne
+    {
+        return $this->hasOne(BrandSetting::class);
+    }
+
+    public function bankImages(): HasMany
+    {
+        return $this->hasMany(BankImage::class);
     }
 
     /**

@@ -2,6 +2,7 @@
 
 namespace App\Mail;
 
+use App\Models\BankImage;
 use App\Models\CampaignRecipient;
 use App\Services\Email\EmailTrackingService;
 use App\Services\Email\LinkRewriter;
@@ -55,10 +56,14 @@ class CampaignEmail extends Mailable
         $tracking = app(EmailTrackingService::class);
         $rewriter = app(LinkRewriter::class);
 
-        $rewrittenBody = $rewriter->rewrite(
+        $bodyHtml = $this->resolveImagePlaceholders(
             (string) ($this->creative['body_html'] ?? ''),
-            $this->recipient,
         );
+
+        $rewrittenBody = $rewriter->rewrite($bodyHtml, $this->recipient);
+
+        $campaign = $this->recipient->campaign;
+        $brand = $campaign?->user?->brandSetting;
 
         return new Content(
             view: 'emails.campaign',
@@ -71,7 +76,24 @@ class CampaignEmail extends Mailable
                 'unsubscribeUrl' => $tracking->unsubscribeUrl($this->recipient),
                 'ctaUrl' => $tracking->clickUrl($this->recipient, url('/')),
                 'hotelName' => $this->strategy['recommended_hotel']['name'] ?? 'Eurostars',
+                'brandLogoUrl' => $brand?->logoUrl(),
+                'brandName' => $brand?->brand_name,
             ],
         );
+    }
+
+    private function resolveImagePlaceholders(string $html): string
+    {
+        $userId = $this->recipient->campaign?->user_id;
+
+        if (! $userId) {
+            return $html;
+        }
+
+        return (string) preg_replace_callback('/\{\{image:(\d+)\}\}/', function ($matches) use ($userId) {
+            $image = BankImage::where('id', $matches[1])->where('user_id', $userId)->first();
+
+            return $image ? $image->url() : '';
+        }, $html);
     }
 }

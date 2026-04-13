@@ -2,8 +2,11 @@
 
 use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\BrandSettingsController;
 use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CampaignSendController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ImageBankController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\WebhookSettingsController;
 use App\Models\Campaign;
@@ -46,6 +49,21 @@ Route::middleware('guest')->group(function () {
 
 Route::middleware('auth')->group(function () {
     Route::post('logout', [AuthController::class, 'logout'])->name('logout');
+
+    // Dashboard
+    Route::get('dashboard', [DashboardController::class, 'index'])->name('dashboard.index');
+    Route::get('dashboard/analytics', [DashboardController::class, 'analytics'])->name('dashboard.analytics');
+    Route::get('dashboard/send-history', [DashboardController::class, 'sendHistory'])->name('dashboard.send-history');
+    Route::get('dashboard/email-previews', [DashboardController::class, 'emailPreviews'])->name('dashboard.email-previews');
+
+    // Brand settings
+    Route::get('settings/brand', [BrandSettingsController::class, 'show'])->name('settings.brand.show');
+    Route::post('settings/brand', [BrandSettingsController::class, 'update'])->name('settings.brand.update');
+
+    // Image bank
+    Route::get('settings/image-bank', [ImageBankController::class, 'index'])->name('settings.image-bank.index');
+    Route::post('settings/image-bank', [ImageBankController::class, 'store'])->name('settings.image-bank.store');
+    Route::post('settings/image-bank/{bankImage}/delete', [ImageBankController::class, 'destroy'])->name('settings.image-bank.destroy');
 
     // API token management UI
     Route::get('settings/api-token', [ApiTokenController::class, 'show'])

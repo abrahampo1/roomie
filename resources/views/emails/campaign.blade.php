@@ -26,9 +26,13 @@
                     {{-- ═══ Hero navy ═══ --}}
                     <tr>
                         <td style="background-color:#1a1a2e;padding:48px 48px 56px;">
-                            <p style="margin:0 0 20px;font-family:'Courier New',Courier,monospace;font-size:11px;letter-spacing:2.5px;color:#c8956c;text-transform:uppercase;">
-                                &#10022;&nbsp;&nbsp;{{ $hotelName }}
-                            </p>
+                            @if (! empty($brandLogoUrl))
+                                <img src="{{ $brandLogoUrl }}" alt="{{ $brandName ?? $hotelName }}" style="display:block;max-height:48px;width:auto;margin:0 0 20px;">
+                            @else
+                                <p style="margin:0 0 20px;font-family:'Courier New',Courier,monospace;font-size:11px;letter-spacing:2.5px;color:#c8956c;text-transform:uppercase;">
+                                    &#10022;&nbsp;&nbsp;{{ $hotelName }}
+                                </p>
+                            @endif
                             <h1 style="margin:0;font-family:Georgia,'Times New Roman',serif;font-size:36px;line-height:1.1;font-weight:normal;color:#faf8f5;letter-spacing:-0.01em;">
                                 {{ $creative['headline'] ?? '' }}
                             </h1>

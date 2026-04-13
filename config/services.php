@@ -45,6 +45,10 @@ return [
         // Hard cap on how long the user's API key may remain encrypted on
         // the campaign row for autonomous follow-ups.
         'followup_max_retention_days' => env('ROOMIE_FOLLOWUP_MAX_RETENTION_DAYS', 14),
+
+        // Image bank limits.
+        'bank_images_max_per_user' => env('ROOMIE_BANK_IMAGES_MAX', 100),
+        'bank_image_max_size_kb' => env('ROOMIE_BANK_IMAGE_MAX_KB', 5120),
     ],
 
 ];

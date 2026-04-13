@@ -49,7 +49,7 @@ class CampaignPipeline
                 'strategy' => $strategy,
             ]);
 
-            $creative = $this->runCreative($campaign->objective, $strategy);
+            $creative = $this->runCreative($campaign, $strategy);
             $campaign->update(['creative' => $creative]);
             WebhookDispatcher::dispatchCampaignEvent($campaign, 'campaign.creative_completed', [
                 'campaign_id' => $campaign->id,
@@ -177,11 +177,14 @@ class CampaignPipeline
         return $this->client->complete($prompt, 'strategist');
     }
 
-    private function runCreative(string $objective, array $strategy): array
+    private function runCreative(Campaign $campaign, array $strategy): array
     {
+        $objective = $campaign->objective;
         $strategyJson = json_encode($strategy, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         $intensity = $this->intensityGuidance();
-        $designGuide = $this->creativeDesignGuide();
+        $designGuide = $this->creativeDesignGuide($campaign);
+        $brandContext = $this->buildBrandContext($campaign);
+        $imageContext = $this->buildImageBankContext($campaign);
         $hotelName = $strategy['recommended_hotel']['name'] ?? 'el hotel destacado';
         $hotelCity = $strategy['recommended_hotel']['city'] ?? '';
         $tone = $strategy['tone'] ?? '';
@@ -199,9 +202,13 @@ class CampaignPipeline
         Mensaje clave (debe aparecer literalmente en el body): {$keyMessage}
         Hotel destacado: {$hotelName} en {$hotelCity}
 
+        {$brandContext}
+
         {$intensity}
 
         {$designGuide}
+
+        {$imageContext}
 
         Responde en JSON con esta estructura EXACTA:
         {
@@ -233,9 +240,14 @@ class CampaignPipeline
      * refinement prompt — so all three produce `body_html` that slots into
      * the same outer email shell.
      */
-    private function creativeDesignGuide(): string
+    private function creativeDesignGuide(?Campaign $campaign = null): string
     {
-        return <<<'GUIDE'
+        $hasImages = $campaign && $campaign->user?->bankImages()->exists();
+        $imageRule = $hasImages
+            ? '- Puedes incluir imágenes del banco usando placeholders {{image:ID}} (máximo 2). Formato: <img src="{{image:ID}}" alt="descripción" style="display:block;max-width:100%;height:auto;margin:0 0 20px;border-radius:8px;">. Si ninguna es relevante, no incluyas ninguna.'
+            : '- NO imágenes (no tenemos assets).';
+
+        return <<<GUIDE
         DIRECTRICES DE DISEÑO DEL EMAIL (críticas para la calidad visual final):
 
         CONTEXTO DEL SHELL (lo que tú NO tienes que escribir):
@@ -261,7 +273,7 @@ class CampaignPipeline
 
         REGLAS DE EMAIL CLIENT:
         - SIEMPRE inline styles. NUNCA <style> tags.
-        - NO imágenes (no tenemos assets).
+        {$imageRule}
         - NO JavaScript.
         - NO SVG inline (Outlook no lo renderiza).
         - Usa `&mdash;` para em-dash, `&nbsp;` donde quieras evitar wrap.
@@ -390,7 +402,9 @@ class CampaignPipeline
         $strategy = $campaign->strategy ?? [];
         $strategyJson = json_encode($strategy, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         $intensity = $this->intensityGuidance();
-        $designGuide = $this->creativeDesignGuide();
+        $designGuide = $this->creativeDesignGuide($campaign);
+        $brandContext = $this->buildBrandContext($campaign);
+        $imageContext = $this->buildImageBankContext($campaign);
 
         $previousSubjects = [];
         if (! empty($campaign->creative['subject_line'] ?? null)) {
@@ -421,9 +435,13 @@ class CampaignPipeline
         ASUNTOS YA ENVIADOS A ESTE CLIENTE (no repitas ninguno):
             {$previousSubjectsList}
 
+        {$brandContext}
+
         {$intensity}
 
         {$designGuide}
+
+        {$imageContext}
 
         REGLAS DEL SEGUIMIENTO:
         - Reconoce implícitamente que ya se contactó ("Te escribimos de nuevo", "Sigue disponible...").
@@ -458,7 +476,9 @@ class CampaignPipeline
         $strategyJson = json_encode($strategy, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         $creativeJson = json_encode($currentCreative, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         $intensity = $this->intensityGuidance();
-        $designGuide = $this->creativeDesignGuide();
+        $designGuide = $this->creativeDesignGuide($campaign);
+        $brandContext = $this->buildBrandContext($campaign);
+        $imageContext = $this->buildImageBankContext($campaign);
         $objective = $campaign->objective;
         $safePrompt = trim($refinementPrompt);
 
@@ -478,9 +498,13 @@ class CampaignPipeline
         {$safePrompt}
         """
 
+        {$brandContext}
+
         {$intensity}
 
         {$designGuide}
+
+        {$imageContext}
 
         REGLAS DEL AJUSTE:
         - Aplica la instrucción del usuario literalmente. Si pide "asunto más corto", acorta SOLO el asunto. Si pide "añade un pull-quote sobre el atardecer", añade ese pull-quote sin tocar el resto.
@@ -493,6 +517,76 @@ class CampaignPipeline
         PROMPT;
 
         return $this->client->complete($prompt, 'creative-refine');
+    }
+
+    private function buildBrandContext(Campaign $campaign): string
+    {
+        $brand = $campaign->user?->brandSetting;
+        if (! $brand || ! $brand->brand_name) {
+            return '';
+        }
+
+        $parts = ['IDENTIDAD DE MARCA:'];
+        $parts[] = "- Nombre: {$brand->brand_name}";
+
+        if ($brand->primary_color) {
+            $parts[] = "- Color primario: {$brand->primary_color}";
+        }
+        if ($brand->secondary_color) {
+            $parts[] = "- Color secundario: {$brand->secondary_color}";
+        }
+        if ($brand->voice_description) {
+            $parts[] = "- Voz de marca: {$brand->voice_description}";
+        }
+        if ($brand->contact_email || $brand->contact_phone || $brand->contact_website) {
+            $contact = array_filter([
+                $brand->contact_email ? "email: {$brand->contact_email}" : null,
+                $brand->contact_phone ? "tel: {$brand->contact_phone}" : null,
+                $brand->contact_website ? "web: {$brand->contact_website}" : null,
+            ]);
+            $parts[] = '- Contacto: '.implode(', ', $contact);
+        }
+        if ($brand->social_links) {
+            $social = collect($brand->social_links)
+                ->map(fn ($url, $platform) => "{$platform}: {$url}")
+                ->implode(', ');
+            $parts[] = "- Redes: {$social}";
+        }
+
+        return implode("\n        ", $parts);
+    }
+
+    private function buildImageBankContext(Campaign $campaign): string
+    {
+        $images = $campaign->user?->bankImages()
+            ->select('id', 'title', 'alt_text', 'category', 'tags', 'width', 'height')
+            ->get();
+
+        if (! $images || $images->isEmpty()) {
+            return '';
+        }
+
+        $listing = $images->map(fn ($img) => "- [{$img->id}] \"{$img->title}\""
+            .($img->category ? " ({$img->category})" : '')
+            .($img->width ? " {$img->width}x{$img->height}px" : '')
+            .($img->alt_text ? " alt=\"{$img->alt_text}\"" : '')
+            .($img->tags ? ' tags: '.implode(', ', $img->tags) : '')
+        )->implode("\n        ");
+
+        return <<<CTX
+        BANCO DE IMÁGENES DISPONIBLE:
+        El usuario tiene las siguientes imágenes que puedes usar en el body_html.
+        Para incluir una imagen, usa exactamente este placeholder: {{image:ID}}
+        El sistema lo reemplazará por la URL real al renderizar.
+
+        {$listing}
+
+        REGLAS DE USO DE IMÁGENES:
+        - Máximo 2 imágenes por email (para no saturar).
+        - Cada imagen debe ir como: <img src="{{image:ID}}" alt="alt text" style="display:block;max-width:100%;height:auto;margin:0 0 20px;border-radius:8px;">
+        - Si ninguna imagen es relevante para el contenido, NO incluyas ninguna. Es preferible no incluir imágenes a meter una irrelevante.
+        - Las imágenes van DENTRO del body_html, entre los párrafos, nunca como hero.
+        CTX;
     }
 
     private function intensityGuidance(): string
