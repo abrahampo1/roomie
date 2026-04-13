@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AgentController;
 use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrandSettingsController;
@@ -7,6 +8,7 @@ use App\Http\Controllers\CampaignController;
 use App\Http\Controllers\CampaignSendController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImageBankController;
+use App\Http\Controllers\SequenceController;
 use App\Http\Controllers\TrackingController;
 use App\Http\Controllers\WebhookSettingsController;
 use App\Models\Campaign;
@@ -55,6 +57,18 @@ Route::middleware('auth')->group(function () {
     Route::get('dashboard/analytics', [DashboardController::class, 'analytics'])->name('dashboard.analytics');
     Route::get('dashboard/send-history', [DashboardController::class, 'sendHistory'])->name('dashboard.send-history');
     Route::get('dashboard/email-previews', [DashboardController::class, 'emailPreviews'])->name('dashboard.email-previews');
+
+    // Agents
+    Route::get('dashboard/agents', [AgentController::class, 'index'])->name('dashboard.agents');
+    Route::post('dashboard/agents', [AgentController::class, 'store'])->name('dashboard.agents.store');
+    Route::post('dashboard/agents/{customAgent}', [AgentController::class, 'update'])->name('dashboard.agents.update');
+    Route::post('dashboard/agents/{customAgent}/delete', [AgentController::class, 'destroy'])->name('dashboard.agents.destroy');
+
+    // Sequences
+    Route::get('dashboard/sequences', [SequenceController::class, 'index'])->name('dashboard.sequences');
+    Route::post('dashboard/sequences', [SequenceController::class, 'store'])->name('dashboard.sequences.store');
+    Route::post('dashboard/sequences/{pipelineSequence}', [SequenceController::class, 'update'])->name('dashboard.sequences.update');
+    Route::post('dashboard/sequences/{pipelineSequence}/delete', [SequenceController::class, 'destroy'])->name('dashboard.sequences.destroy');
 
     // Brand settings
     Route::get('settings/brand', [BrandSettingsController::class, 'show'])->name('settings.brand.show');

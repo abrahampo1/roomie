@@ -1,4 +1,4 @@
-<x-layouts.app title="Previsualizaciones">
+<x-layouts.dashboard title="Previsualizaciones" active="email-previews">
     <header class="pb-7 sm:pb-8 mb-2">
         <div>
             <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-navy/45 mb-2">Panel de control</p>
@@ -6,27 +6,26 @@
         </div>
     </header>
 
-    <x-dashboard.nav-tabs active="email-previews" />
-
     @if ($campaigns->isEmpty())
         <div class="py-16 text-center border border-dashed border-navy/15 rounded-2xl">
             <svg class="w-6 h-6 text-navy/15 mx-auto mb-4" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
             <p class="text-navy/55 text-sm">No hay emails generados todavía.</p>
         </div>
     @else
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
             @foreach ($campaigns as $campaign)
                 @php
                     $creative = $campaign->creative;
                     $subject = $creative['subject_line'] ?? '';
                     $headline = $creative['headline'] ?? '';
                     $bodyHtml = $creative['body_html'] ?? '';
+                    $previewText = $creative['preview_text'] ?? '';
                 @endphp
                 <a href="{{ route('campaigns.show', $campaign) }}"
-                   class="block rounded-2xl border border-navy/15 bg-white overflow-hidden hover:border-navy/30 transition group">
-                    {{-- Email preview header --}}
+                   class="flex flex-col rounded-2xl border border-navy/10 bg-white overflow-hidden hover:border-navy/25 transition group">
+                    {{-- Card header --}}
                     <div class="bg-navy px-5 py-4">
-                        <p class="font-mono text-[10px] text-cream/40 uppercase tracking-wider mb-2">
+                        <p class="font-mono text-[10px] text-cream/35 uppercase tracking-[0.18em] mb-2">
                             {{ $campaign->created_at->translatedFormat('d M Y') }}
                         </p>
                         <p class="font-[Fredoka] font-semibold text-cream text-lg leading-snug line-clamp-2">
@@ -34,29 +33,32 @@
                         </p>
                     </div>
 
-                    {{-- Email preview body --}}
-                    <div class="px-5 py-4">
-                        <p class="text-xs font-medium text-navy/70 mb-2 truncate">
-                            Asunto: {{ $subject }}
+                    {{-- Card body --}}
+                    <div class="flex-1 px-5 py-4">
+                        <p class="text-xs font-medium text-navy/70 mb-1.5 truncate">
+                            <span class="font-mono text-[10px] uppercase tracking-[0.18em] text-navy/40">Asunto</span>
                         </p>
-                        <div class="text-xs text-navy/50 leading-relaxed line-clamp-4 prose-preview">
+                        <p class="text-sm text-navy/65 mb-3 truncate">{{ $subject }}</p>
+
+                        <div class="text-xs text-navy/45 leading-relaxed line-clamp-4">
                             {!! Str::limit(strip_tags($bodyHtml), 200) !!}
                         </div>
+                    </div>
 
-                        <div class="flex items-center justify-between mt-4 pt-3 border-t border-navy/10">
-                            <span class="font-mono text-[10px] text-navy/35">
-                                #{{ str_pad($campaign->id, 3, '0', STR_PAD_LEFT) }}
+                    {{-- Card footer --}}
+                    <div class="px-5 py-3.5 border-t border-navy/[0.06] flex items-center justify-between">
+                        <span class="font-mono text-[10px] text-navy/30 tabular-nums">
+                            #{{ str_pad($campaign->id, 3, '0', STR_PAD_LEFT) }}
+                        </span>
+                        @if ($campaign->quality_score)
+                            <span class="font-[Fredoka] font-semibold text-xs tabular-nums
+                                {{ $campaign->quality_score >= 80 ? 'text-emerald-700' : ($campaign->quality_score >= 60 ? 'text-amber-700' : 'text-red-700') }}">
+                                {{ $campaign->quality_score }}/100
                             </span>
-                            @if ($campaign->quality_score)
-                                <span class="font-[Fredoka] font-semibold text-xs
-                                    {{ $campaign->quality_score >= 80 ? 'text-emerald-700' : ($campaign->quality_score >= 60 ? 'text-amber-700' : 'text-red-700') }}">
-                                    {{ $campaign->quality_score }}/100
-                                </span>
-                            @endif
-                            <span class="text-xs text-navy/45 group-hover:text-copper transition">
-                                Ver campaña &rarr;
-                            </span>
-                        </div>
+                        @endif
+                        <span class="text-xs text-navy/40 group-hover:text-copper transition">
+                            Ver campaña &rarr;
+                        </span>
                     </div>
                 </a>
             @endforeach
@@ -68,4 +70,4 @@
             </div>
         @endif
     @endif
-</x-layouts.app>
+</x-layouts.dashboard>

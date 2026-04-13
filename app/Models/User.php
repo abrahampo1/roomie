@@ -47,6 +47,16 @@ class User extends Authenticatable
         return $this->hasMany(BankImage::class);
     }
 
+    public function customAgents(): HasMany
+    {
+        return $this->hasMany(CustomAgent::class);
+    }
+
+    public function pipelineSequences(): HasMany
+    {
+        return $this->hasMany(PipelineSequence::class);
+    }
+
     /**
      * Generate a fresh API token for this user, store its SHA-256 hash on
      * the model, and return the plain token so the caller can show it to the

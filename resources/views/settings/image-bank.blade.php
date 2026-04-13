@@ -1,7 +1,7 @@
-<x-layouts.app title="Banco de imágenes">
-    <header class="flex items-end justify-between pb-7 sm:pb-8 mb-9 sm:mb-10 border-b border-navy/15 gap-4 flex-wrap">
+<x-layouts.dashboard title="Banco de imágenes" active="image-bank">
+    <header class="flex items-end justify-between pb-7 sm:pb-8 mb-9 sm:mb-10 border-b border-navy/10 gap-4 flex-wrap">
         <div>
-            <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-navy/45 mb-2">Ajustes</p>
+            <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-navy/40 mb-2">Ajustes</p>
             <h1 class="font-[Fredoka] font-semibold text-3xl sm:text-4xl tracking-tight">Banco de imágenes</h1>
             <p class="text-sm text-navy/55 mt-2">
                 Sube imágenes que la IA puede usar al generar emails.
@@ -110,7 +110,7 @@
             <p class="text-navy/55 text-sm">No hay imágenes en el banco todavía.</p>
         </div>
     @else
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-4">
             @foreach ($images as $image)
                 <div class="group relative rounded-xl border border-navy/15 bg-white overflow-hidden">
                     <div class="aspect-square bg-navy/5">
@@ -147,4 +147,4 @@
             </div>
         @endif
     @endif
-</x-layouts.app>
+</x-layouts.dashboard>

@@ -1,7 +1,7 @@
-<x-layouts.app title="Marca">
-    <header class="flex items-end justify-between pb-7 sm:pb-8 mb-9 sm:mb-10 border-b border-navy/15 gap-4 flex-wrap">
+<x-layouts.dashboard title="Marca" active="brand">
+    <header class="flex items-end justify-between pb-7 sm:pb-8 mb-9 sm:mb-10 border-b border-navy/10 gap-4 flex-wrap">
         <div>
-            <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-navy/45 mb-2">Ajustes</p>
+            <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-navy/40 mb-2">Ajustes</p>
             <h1 class="font-[Fredoka] font-semibold text-3xl sm:text-4xl tracking-tight">Identidad de marca</h1>
             <p class="text-sm text-navy/55 mt-2">Define tu marca para que la IA genere campañas alineadas con tu identidad.</p>
         </div>
@@ -171,4 +171,4 @@
         });
     </script>
     @endpush
-</x-layouts.app>
+</x-layouts.dashboard>

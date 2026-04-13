@@ -1,4 +1,4 @@
-<x-layouts.app title="Historial de envío">
+<x-layouts.dashboard title="Historial de envío" active="send-history">
     <header class="pb-7 sm:pb-8 mb-2">
         <div>
             <p class="font-mono text-[11px] uppercase tracking-[0.18em] text-navy/45 mb-2">Panel de control</p>
@@ -6,62 +6,76 @@
         </div>
     </header>
 
-    <x-dashboard.nav-tabs active="send-history" />
-
     @if ($recipients->isEmpty())
         <div class="py-16 text-center border border-dashed border-navy/15 rounded-2xl">
             <svg class="w-6 h-6 text-navy/15 mx-auto mb-4" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
             <p class="text-navy/55 text-sm">No hay envíos registrados todavía.</p>
         </div>
     @else
-        {{-- Header row --}}
-        <div class="hidden sm:grid grid-cols-12 gap-3 pb-2 mb-1 border-b border-navy/15 text-[10px] font-mono text-navy/40 uppercase tracking-wider">
-            <span class="col-span-3">Destinatario</span>
-            <span class="col-span-3">Campaña</span>
-            <span class="col-span-2">Estado</span>
-            <span class="col-span-2">Opens / Clicks</span>
-            <span class="col-span-2 text-right">Último envío</span>
-        </div>
+        <div class="rounded-2xl border border-navy/10 bg-white overflow-hidden">
+            {{-- Table --}}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-navy/[0.02]">
+                            <th class="px-5 py-3 text-[10px] font-mono font-normal uppercase tracking-[0.18em] text-navy/40">Destinatario</th>
+                            <th class="px-5 py-3 text-[10px] font-mono font-normal uppercase tracking-[0.18em] text-navy/40">Campaña</th>
+                            <th class="px-5 py-3 text-[10px] font-mono font-normal uppercase tracking-[0.18em] text-navy/40">Estado</th>
+                            <th class="px-5 py-3 text-[10px] font-mono font-normal uppercase tracking-[0.18em] text-navy/40">Opens / Clicks</th>
+                            <th class="px-5 py-3 text-[10px] font-mono font-normal uppercase tracking-[0.18em] text-navy/40 text-right">Último envío</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-navy/[0.06]">
+                        @foreach ($recipients as $r)
+                            @php
+                                $statusLabel = match ($r->status) {
+                                    'queued' => 'En cola',
+                                    'sending' => 'Enviando',
+                                    'sent' => 'Enviado',
+                                    'bounced' => 'Rebote',
+                                    'failed' => 'Fallido',
+                                    'unsubscribed' => 'Baja',
+                                    'converted' => 'Convertido',
+                                    default => $r->status,
+                                };
 
-        <div class="divide-y divide-navy/10">
-            @foreach ($recipients as $r)
-                @php
-                    $statusLabel = match ($r->status) {
-                        'queued' => 'En cola',
-                        'sending' => 'Enviando',
-                        'sent' => 'Enviado',
-                        'bounced' => 'Rebote',
-                        'failed' => 'Fallido',
-                        'unsubscribed' => 'Baja',
-                        'converted' => 'Convertido',
-                        default => $r->status,
-                    };
-                    $statusColor = match ($r->status) {
-                        'converted' => 'text-emerald-700',
-                        'unsubscribed' => 'text-amber-700',
-                        'bounced', 'failed' => 'text-red-700',
-                        default => 'text-navy/55',
-                    };
-                @endphp
-                <div class="grid grid-cols-12 gap-3 py-3 items-center text-sm">
-                    <div class="col-span-6 sm:col-span-3">
-                        <p class="font-mono text-xs text-navy/70 truncate">{{ $r->email }}</p>
-                        @if ($r->first_name)
-                            <p class="text-[11px] text-navy/45 truncate">{{ $r->first_name }}</p>
-                        @endif
-                    </div>
-                    <div class="col-span-6 sm:col-span-3">
-                        <p class="text-xs text-navy/60 truncate">{{ $r->campaign_name ?? Str::limit($r->campaign_objective, 40) }}</p>
-                    </div>
-                    <span class="col-span-4 sm:col-span-2 text-xs {{ $statusColor }}">{{ $statusLabel }}</span>
-                    <span class="col-span-4 sm:col-span-2 text-xs text-navy/45 font-mono">
-                        {{ $r->opens_count }}<span class="text-navy/30"> / {{ $r->clicks_count }}</span>
-                    </span>
-                    <span class="col-span-4 sm:col-span-2 text-xs text-navy/40 font-mono text-right">
-                        {{ $r->last_sent_at ? \Carbon\Carbon::parse($r->last_sent_at)->translatedFormat('d M H:i') : '—' }}
-                    </span>
-                </div>
-            @endforeach
+                                $badgeBg = match ($r->status) {
+                                    'converted' => 'bg-emerald-50 text-emerald-700',
+                                    'unsubscribed' => 'bg-amber-50 text-amber-700',
+                                    'bounced', 'failed' => 'bg-red-50 text-red-700',
+                                    default => 'bg-navy/[0.04] text-navy/55',
+                                };
+                            @endphp
+                            <tr class="hover:bg-navy/[0.02] transition-colors">
+                                <td class="px-5 py-3.5">
+                                    <p class="text-sm text-navy/80 truncate max-w-[200px]">{{ $r->email }}</p>
+                                    @if ($r->first_name)
+                                        <p class="text-[11px] text-navy/40 mt-0.5">{{ $r->first_name }}</p>
+                                    @endif
+                                </td>
+                                <td class="px-5 py-3.5">
+                                    <p class="text-sm text-navy/60 truncate max-w-[220px]">{{ $r->campaign_name ?? Str::limit($r->campaign_objective, 40) }}</p>
+                                </td>
+                                <td class="px-5 py-3.5">
+                                    <span class="inline-block px-2.5 py-1 rounded-full text-[11px] font-medium {{ $badgeBg }}">
+                                        {{ $statusLabel }}
+                                    </span>
+                                </td>
+                                <td class="px-5 py-3.5">
+                                    <span class="text-sm font-mono text-navy/60 tabular-nums">
+                                        {{ $r->opens_count }}<span class="text-navy/25 mx-0.5">/</span>{{ $r->clicks_count }}
+                                    </span>
+                                </td>
+                                <td class="px-5 py-3.5 text-right">
+                                    <span class="text-xs font-mono text-navy/40">
+                                        {{ $r->last_sent_at ? \Carbon\Carbon::parse($r->last_sent_at)->translatedFormat('d M H:i') : '—' }}
+                                    </span>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
         </div>
 
         @if ($recipients->hasPages())
@@ -70,4 +84,4 @@
             </div>
         @endif
     @endif
-</x-layouts.app>
+</x-layouts.dashboard>
