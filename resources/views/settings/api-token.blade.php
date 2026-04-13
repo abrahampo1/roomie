@@ -1,4 +1,4 @@
-<x-layouts.app title="API">
+<x-layouts.dashboard title="API y Webhooks" active="api">
     <div class="max-w-3xl">
         <a href="{{ route('home') }}" class="text-xs text-navy/45 hover:text-navy transition py-2 -my-2 inline-block">
             ← Inicio
@@ -416,4 +416,4 @@
             @endif
         </section>
     </div>
-</x-layouts.app>
+</x-layouts.dashboard>

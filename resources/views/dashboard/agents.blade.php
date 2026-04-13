@@ -107,7 +107,7 @@
                             <div>
                                 <label class="block font-mono text-[10px] text-navy/40 uppercase tracking-wider mb-1.5">Rol</label>
                                 <select name="role"
-                                        class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 text-base focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition">
+                                        class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 text-base focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition select-styled">
                                     <option value="analyst" {{ $agent->role === 'analyst' ? 'selected' : '' }}>Analista</option>
                                     <option value="strategist" {{ $agent->role === 'strategist' ? 'selected' : '' }}>Estratega</option>
                                     <option value="creative" {{ $agent->role === 'creative' ? 'selected' : '' }}>Creativo</option>

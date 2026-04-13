@@ -1,4 +1,4 @@
-<x-layouts.app title="Nueva campaña">
+<x-layouts.dashboard title="Nueva campaña" active="campaigns">
     <div class="max-w-2xl">
         <a href="{{ route('campaigns.index') }}" class="text-xs text-navy/45 hover:text-navy transition py-2 -my-2 inline-block">
             ← Campañas
@@ -342,4 +342,4 @@
         })();
     </script>
     @endpush
-</x-layouts.app>
+</x-layouts.dashboard>

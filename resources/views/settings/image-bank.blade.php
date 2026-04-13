@@ -67,9 +67,23 @@
             </div>
 
             <div class="mb-4">
-                <input type="file" name="images[]" multiple accept="image/jpeg,image/png,image/webp" required
-                       class="block w-full text-sm text-navy/55 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-navy/5 file:text-navy hover:file:bg-navy/10 file:transition file:cursor-pointer">
-                <p class="mt-1 text-xs text-navy/40">JPG, PNG o WebP. Máx 5 MB por imagen, hasta 5 a la vez.</p>
+                <div class="file-drop-zone" x-data="{ fileCount: 0 }"
+                     @dragover.prevent="$el.classList.add('dragover')"
+                     @dragleave.prevent="$el.classList.remove('dragover')"
+                     @drop.prevent="$el.classList.remove('dragover'); fileCount = $event.dataTransfer.files?.length || 0">
+                    <input type="file" name="images[]" multiple accept="image/jpeg,image/png,image/webp" required
+                           @change="fileCount = $event.target.files?.length || 0">
+                    <div class="pointer-events-none">
+                        <svg class="w-8 h-8 text-navy/20 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v10.5a2.25 2.25 0 0 0 2.25 2.25Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+                        </svg>
+                        <p class="text-sm text-navy/50" x-show="!fileCount">Arrastra imágenes aquí o <span class="text-copper font-medium">selecciona archivos</span></p>
+                        <p class="text-sm text-navy/70 font-medium" x-show="fileCount" x-cloak>
+                            <span x-text="fileCount"></span> <span x-text="fileCount === 1 ? 'archivo seleccionado' : 'archivos seleccionados'"></span>
+                        </p>
+                        <p class="text-[11px] text-navy/35 mt-1.5">JPG, PNG o WebP. Máx 5 MB por imagen, hasta 5 a la vez.</p>
+                    </div>
+                </div>
                 @error('images')
                     <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
                 @enderror

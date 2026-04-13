@@ -137,7 +137,7 @@
                                             <span class="font-mono text-[10px] text-navy/30 w-5 text-center shrink-0" x-text="idx + 1"></span>
 
                                             <select :name="'steps[' + idx + '][role]'" x-model="step.role"
-                                                    class="flex-1 rounded-xl border border-navy/20 bg-white px-3 py-2 text-sm focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition">
+                                                    class="flex-1 rounded-xl border border-navy/20 bg-white px-3 py-2 text-sm focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition select-styled">
                                                 <option value="analyst">Analista</option>
                                                 <option value="strategist">Estratega</option>
                                                 <option value="creative">Creativo</option>
@@ -146,7 +146,7 @@
                                             </select>
 
                                             <select :name="'steps[' + idx + '][agent_id]'" x-model="step.agent_id"
-                                                    class="flex-1 rounded-xl border border-navy/20 bg-white px-3 py-2 text-sm focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition">
+                                                    class="flex-1 rounded-xl border border-navy/20 bg-white px-3 py-2 text-sm focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition select-styled">
                                                 <option value="">Agente del sistema</option>
                                                 @foreach ($agents as $agent)
                                                     <option value="{{ $agent->id }}">{{ $agent->name }}</option>
@@ -265,7 +265,7 @@
                                 <span class="font-mono text-[10px] text-navy/30 w-5 text-center shrink-0" x-text="idx + 1"></span>
 
                                 <select :name="'steps[' + idx + '][role]'" x-model="step.role"
-                                        class="flex-1 rounded-xl border border-navy/20 bg-white px-3 py-2 text-sm focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition">
+                                        class="flex-1 rounded-xl border border-navy/20 bg-white px-3 py-2 text-sm focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition select-styled">
                                     <option value="analyst">Analista</option>
                                     <option value="strategist">Estratega</option>
                                     <option value="creative">Creativo</option>
@@ -274,7 +274,7 @@
                                 </select>
 
                                 <select :name="'steps[' + idx + '][agent_id]'" x-model="step.agent_id"
-                                        class="flex-1 rounded-xl border border-navy/20 bg-white px-3 py-2 text-sm focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition">
+                                        class="flex-1 rounded-xl border border-navy/20 bg-white px-3 py-2 text-sm focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition select-styled">
                                     <option value="">Agente del sistema</option>
                                     @foreach ($agents as $agent)
                                         <option value="{{ $agent->id }}">{{ $agent->name }}</option>

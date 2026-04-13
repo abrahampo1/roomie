@@ -228,7 +228,7 @@
                     <div x-show="followupsOn" x-cloak class="flex gap-4 max-w-md">
                         <div class="flex-1">
                             <label for="followup_max_attempts" class="block text-xs text-navy/55 mb-1.5">Intentos máx.</label>
-                            <select name="followup_max_attempts" id="followup_max_attempts" class="w-full rounded-xl border border-navy/20 bg-white px-3 py-2.5 text-base">
+                            <select name="followup_max_attempts" id="followup_max_attempts" class="w-full rounded-xl border border-navy/20 bg-white px-3 py-2.5 text-base select-styled">
                                 <option value="2">2</option>
                                 <option value="3" selected>3</option>
                                 <option value="4">4</option>
@@ -237,7 +237,7 @@
                         </div>
                         <div class="flex-1">
                             <label for="followup_cooldown_hours" class="block text-xs text-navy/55 mb-1.5">Cooldown</label>
-                            <select name="followup_cooldown_hours" id="followup_cooldown_hours" class="w-full rounded-xl border border-navy/20 bg-white px-3 py-2.5 text-base">
+                            <select name="followup_cooldown_hours" id="followup_cooldown_hours" class="w-full rounded-xl border border-navy/20 bg-white px-3 py-2.5 text-base select-styled">
                                 <option value="1">1h (demo)</option>
                                 <option value="24">24h</option>
                                 <option value="48" selected>48h</option>

@@ -1,7 +1,8 @@
-<x-layouts.app title="Campañas">
-    <header class="flex items-end justify-between pb-7 sm:pb-8 mb-9 sm:mb-10 border-b border-navy/15 gap-4 flex-wrap">
+<x-layouts.dashboard title="Campañas" active="campaigns">
+    <header class="flex items-end justify-between pb-7 sm:pb-8 mb-9 sm:mb-10 border-b border-navy/10 gap-4 flex-wrap">
         <div>
-            <h1 class="font-[Fredoka] font-semibold text-3xl sm:text-4xl tracking-tight">Campañas</h1>
+            <p class="font-mono text-[10px] uppercase tracking-[0.18em] text-navy/40 mb-2">Campañas</p>
+            <h1 class="font-[Fredoka] font-semibold text-3xl sm:text-4xl tracking-tight">Mis campañas</h1>
             <p class="text-sm text-navy/55 mt-2">
                 {{ $campaigns->count() }} {{ $campaigns->count() === 1 ? 'campaña generada' : 'campañas generadas' }} hasta hoy.
             </p>
@@ -62,4 +63,4 @@
             @endforeach
         </ul>
     @endif
-</x-layouts.app>
+</x-layouts.dashboard>

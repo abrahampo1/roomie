@@ -35,9 +35,21 @@
                     </label>
                 </div>
             @endif
-            <input type="file" name="logo" accept="image/jpeg,image/png,image/webp"
-                   class="block w-full text-sm text-navy/55 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-medium file:bg-navy/5 file:text-navy hover:file:bg-navy/10 file:transition file:cursor-pointer">
-            <p class="mt-1 text-xs text-navy/40">JPG, PNG o WebP. Máximo 2 MB.</p>
+            <div class="file-drop-zone" x-data="{ fileName: '' }"
+                 @dragover.prevent="$el.classList.add('dragover')"
+                 @dragleave.prevent="$el.classList.remove('dragover')"
+                 @drop.prevent="$el.classList.remove('dragover'); fileName = $event.dataTransfer.files[0]?.name || ''">
+                <input type="file" name="logo" accept="image/jpeg,image/png,image/webp"
+                       @change="fileName = $event.target.files[0]?.name || ''">
+                <div class="pointer-events-none">
+                    <svg class="w-8 h-8 text-navy/20 mx-auto mb-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+                    </svg>
+                    <p class="text-sm text-navy/50" x-show="!fileName">Arrastra tu logo aquí o <span class="text-copper font-medium">selecciona un archivo</span></p>
+                    <p class="text-sm text-navy/70 font-medium" x-show="fileName" x-text="fileName" x-cloak></p>
+                    <p class="text-[11px] text-navy/35 mt-1.5">JPG, PNG o WebP. Máximo 2 MB.</p>
+                </div>
+            </div>
             @error('logo')
                 <p class="mt-1 text-xs text-red-700">{{ $message }}</p>
             @enderror
