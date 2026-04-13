@@ -34,69 +34,26 @@
         </div>
     </section>
 
-    {{-- Quick-create from templates --}}
-    <section class="mb-10" x-data="{
-        open: false,
-        name: '',
-        role: '',
-        prompt: '',
-        useTemplate(t) {
-            this.name = t.name;
-            this.role = t.role;
-            this.prompt = t.prompt;
-            this.open = true;
-            this.$nextTick(() => this.$refs.nameInput?.focus());
-        }
-    }">
+    {{-- Create agent --}}
+    <section class="mb-10">
         <p class="font-mono text-[10px] text-navy/40 uppercase tracking-[0.18em] mb-4">Crear nuevo agente</p>
 
-        {{-- Template grid --}}
-        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-4" x-show="!open">
+        {{-- Template cards --}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3 mb-6" id="agent-templates">
             @php
                 $templates = [
-                    [
-                        'name' => 'Analista de competencia',
-                        'role' => 'analyst',
-                        'desc' => 'Investiga la competencia del hotel y encuentra oportunidades de diferenciación.',
-                        'prompt' => "Eres un analista de inteligencia competitiva hotelera. Tu tarea es analizar la competencia del hotel objetivo, identificar sus fortalezas y debilidades, y encontrar oportunidades de diferenciación.\n\nDado el contexto de hoteles y clientes, responde con un JSON que contenga:\n- competitors: lista de hoteles competidores con fortalezas/debilidades\n- opportunities: oportunidades de diferenciación\n- threats: amenazas del mercado\n- recommended_positioning: posicionamiento recomendado\n\nResponde SOLO el JSON.",
-                    ],
-                    [
-                        'name' => 'Generador de asuntos',
-                        'role' => 'creative',
-                        'desc' => 'Genera 10 variantes de subject line optimizadas para open rate.',
-                        'prompt' => "Eres un especialista en subject lines de email marketing hotelero. Tu tarea es generar variantes de asuntos optimizados para maximizar el open rate.\n\nDada la estrategia y el contexto del hotel, genera un JSON con:\n- variants: array de 10 objetos, cada uno con:\n  - subject_line: el asunto (max 60 chars)\n  - preview_text: texto de preview (max 90 chars)\n  - technique: técnica utilizada (curiosidad, urgencia, personalización, etc.)\n  - expected_open_rate: estimación de open rate relativo (alto/medio/bajo)\n\nResponde SOLO el JSON.",
-                    ],
-                    [
-                        'name' => 'Traductor multicultural',
-                        'role' => 'creative',
-                        'desc' => 'Adapta el copy del email a diferentes mercados y culturas.',
-                        'prompt' => "Eres un experto en localización y adaptación cultural de marketing hotelero. Tu tarea es adaptar el copy de un email a un mercado específico, manteniendo la esencia del mensaje pero ajustando tono, referencias culturales y estilo.\n\nDado el creative original y el mercado objetivo, genera un JSON con:\n- adapted_subject_line: asunto adaptado\n- adapted_headline: titular adaptado\n- adapted_body_html: body HTML adaptado (mismos estilos inline)\n- cultural_notes: notas sobre las adaptaciones realizadas\n- market: mercado objetivo\n\nResponde SOLO el JSON.",
-                    ],
-                    [
-                        'name' => 'Segmentador avanzado',
-                        'role' => 'analyst',
-                        'desc' => 'Crea micro-segmentos de clientes para personalización granular.',
-                        'prompt' => "Eres un analista de segmentación avanzada de clientes hoteleros. Tu tarea es crear micro-segmentos a partir de los datos de clientes para permitir personalización granular.\n\nDada la base de clientes, genera un JSON con:\n- micro_segments: array de segmentos, cada uno con:\n  - name: nombre descriptivo del segmento\n  - size: tamaño estimado\n  - profile: perfil demográfico y comportamental\n  - value_score: valor del segmento (1-10)\n  - recommended_approach: estrategia recomendada\n  - key_triggers: triggers de compra\n\nResponde SOLO el JSON.",
-                    ],
-                    [
-                        'name' => 'Auditor de accesibilidad',
-                        'role' => 'auditor',
-                        'desc' => 'Revisa el email generado para garantizar accesibilidad y compatibilidad.',
-                        'prompt' => "Eres un auditor de accesibilidad y compatibilidad de emails. Tu tarea es revisar un email HTML para garantizar que sea accesible y compatible con los principales clientes de correo.\n\nDado el creative generado, responde con un JSON:\n- accessibility_score: puntuación de 0-100\n- email_client_compatibility: objeto con Gmail, Outlook, Apple Mail (ok/warning/fail)\n- issues: array de problemas encontrados con severidad y solución\n- improvements: mejoras sugeridas\n- final_verdict: aprobado/requiere cambios/rechazado\n\nResponde SOLO el JSON.",
-                    ],
-                    [
-                        'name' => 'Agente en blanco',
-                        'role' => 'custom',
-                        'desc' => 'Empieza desde cero con un prompt personalizado.',
-                        'prompt' => '',
-                    ],
+                    ['name' => 'Analista de competencia', 'role' => 'analyst', 'desc' => 'Investiga la competencia del hotel y encuentra oportunidades.', 'prompt' => "Eres un analista de inteligencia competitiva hotelera. Analiza la competencia del hotel objetivo, identifica fortalezas y debilidades, y encuentra oportunidades de diferenciación.\n\nResponde con un JSON: competitors, opportunities, threats, recommended_positioning.\n\nResponde SOLO el JSON."],
+                    ['name' => 'Generador de asuntos', 'role' => 'creative', 'desc' => 'Genera 10 variantes de subject line para open rate.', 'prompt' => "Eres un especialista en subject lines de email marketing hotelero. Genera variantes de asuntos para maximizar el open rate.\n\nResponde con un JSON: variants (array de 10 objetos con subject_line, preview_text, technique, expected_open_rate).\n\nResponde SOLO el JSON."],
+                    ['name' => 'Traductor multicultural', 'role' => 'creative', 'desc' => 'Adapta el copy a diferentes mercados y culturas.', 'prompt' => "Eres un experto en localización de marketing hotelero. Adapta el copy de un email a un mercado específico manteniendo la esencia.\n\nResponde con un JSON: adapted_subject_line, adapted_headline, adapted_body_html, cultural_notes, market.\n\nResponde SOLO el JSON."],
+                    ['name' => 'Segmentador avanzado', 'role' => 'analyst', 'desc' => 'Crea micro-segmentos para personalización granular.', 'prompt' => "Eres un analista de segmentación de clientes hoteleros. Crea micro-segmentos a partir de datos de clientes.\n\nResponde con un JSON: micro_segments (array con name, size, profile, value_score, recommended_approach, key_triggers).\n\nResponde SOLO el JSON."],
+                    ['name' => 'Auditor de accesibilidad', 'role' => 'auditor', 'desc' => 'Revisa accesibilidad y compatibilidad del email.', 'prompt' => "Eres un auditor de accesibilidad de emails. Revisa un email HTML para garantizar accesibilidad y compatibilidad.\n\nResponde con un JSON: accessibility_score, email_client_compatibility, issues, improvements, final_verdict.\n\nResponde SOLO el JSON."],
+                    ['name' => 'Agente en blanco', 'role' => 'custom', 'desc' => 'Empieza desde cero con un prompt propio.', 'prompt' => ''],
                 ];
             @endphp
 
-            @foreach ($templates as $tpl)
-                <button type="button"
-                        @click="useTemplate({{ Js::from($tpl) }})"
-                        class="text-left rounded-2xl border border-navy/10 bg-white p-5 hover:border-copper/40 hover:bg-copper/[0.02] transition group cursor-pointer">
+            @foreach ($templates as $i => $tpl)
+                <button type="button" data-template="{{ $i }}"
+                        class="agent-tpl-btn text-left rounded-2xl border border-navy/10 bg-white p-5 hover:border-copper/40 hover:bg-copper/[0.02] transition group cursor-pointer">
                     <div class="flex items-start gap-3">
                         <div class="w-8 h-8 rounded-lg bg-copper/10 flex items-center justify-center shrink-0 group-hover:bg-copper/20 transition">
                             <svg class="w-4 h-4 text-copper" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
@@ -112,11 +69,11 @@
             @endforeach
         </div>
 
-        {{-- Create form (shown after template selection) --}}
-        <div x-show="open" x-cloak class="rounded-2xl border border-navy/10 bg-white p-5 sm:p-6">
+        {{-- Create form --}}
+        <div id="agent-form-wrapper" class="rounded-2xl border border-navy/10 bg-white p-5 sm:p-6 hidden">
             <div class="flex items-center justify-between mb-5">
                 <p class="font-[Fredoka] font-semibold text-navy">Nuevo agente</p>
-                <button type="button" @click="open = false" class="text-navy/40 hover:text-navy transition cursor-pointer">
+                <button type="button" id="agent-form-close" class="text-navy/40 hover:text-navy transition cursor-pointer">
                     <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12" />
                     </svg>
@@ -128,15 +85,15 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
-                        <label class="block text-xs text-navy/55 mb-1.5">Nombre</label>
-                        <input x-ref="nameInput" type="text" name="name" x-model="name" required
+                        <label for="agent-name" class="block text-xs text-navy/55 mb-1.5">Nombre</label>
+                        <input id="agent-name" type="text" name="name" required
                                placeholder="Mi agente"
                                class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 text-base focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition placeholder:text-navy/30">
                         @error('name') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                     </div>
                     <div>
-                        <label class="block text-xs text-navy/55 mb-1.5">Rol en el pipeline</label>
-                        <select name="role" x-model="role" required
+                        <label for="agent-role" class="block text-xs text-navy/55 mb-1.5">Rol en el pipeline</label>
+                        <select id="agent-role" name="role" required
                                 class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 text-base focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition select-styled">
                             <option value="analyst">Analista</option>
                             <option value="strategist">Estratega</option>
@@ -148,11 +105,11 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs text-navy/55 mb-1.5">Prompt del sistema</label>
-                    <textarea name="system_prompt" x-model="prompt" rows="8" required
+                    <label for="agent-prompt" class="block text-xs text-navy/55 mb-1.5">Prompt del sistema</label>
+                    <textarea id="agent-prompt" name="system_prompt" rows="8" required
                               placeholder="Eres un agente especializado en..."
                               class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 text-base focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition font-mono text-sm leading-relaxed placeholder:font-sans placeholder:text-navy/30"></textarea>
-                    <p class="text-[11px] text-navy/35 mt-1">El prompt debe terminar pidiendo respuesta en JSON. El output se pasa al siguiente agente de la secuencia.</p>
+                    <p class="text-[11px] text-navy/35 mt-1">El prompt debe terminar pidiendo respuesta en JSON.</p>
                     @error('system_prompt') <p class="mt-1 text-xs text-red-600">{{ $message }}</p> @enderror
                 </div>
 
@@ -164,9 +121,9 @@
                         Opciones avanzadas
                     </summary>
                     <div class="mt-3">
-                        <label class="block text-xs text-navy/55 mb-1.5">Schema de salida JSON (opcional)</label>
-                        <textarea name="output_schema" rows="4"
-                                  placeholder='{"key": "tipo de dato esperado"}'
+                        <label for="agent-schema" class="block text-xs text-navy/55 mb-1.5">Schema de salida JSON (opcional)</label>
+                        <textarea id="agent-schema" name="output_schema" rows="4"
+                                  placeholder="{ }"
                                   class="w-full rounded-xl border border-navy/20 bg-white px-4 py-3 text-base focus:border-navy/60 focus:ring-1 focus:ring-navy/20 transition font-mono text-sm leading-relaxed placeholder:font-sans placeholder:text-navy/30"></textarea>
                     </div>
                 </details>
@@ -231,5 +188,40 @@
             </div>
         </section>
     @endif
+
+    @push('scripts')
+    <script>
+    (function() {
+        var templates = @json($templates);
+        var wrapper = document.getElementById('agent-form-wrapper');
+        var templatesGrid = document.getElementById('agent-templates');
+        var nameInput = document.getElementById('agent-name');
+        var roleSelect = document.getElementById('agent-role');
+        var promptArea = document.getElementById('agent-prompt');
+        var closeBtn = document.getElementById('agent-form-close');
+
+        document.querySelectorAll('.agent-tpl-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                var idx = parseInt(this.dataset.template);
+                var tpl = templates[idx];
+                if (!tpl) return;
+
+                nameInput.value = tpl.name;
+                roleSelect.value = tpl.role;
+                promptArea.value = tpl.prompt;
+
+                templatesGrid.classList.add('hidden');
+                wrapper.classList.remove('hidden');
+                nameInput.focus();
+            });
+        });
+
+        closeBtn.addEventListener('click', function() {
+            wrapper.classList.add('hidden');
+            templatesGrid.classList.remove('hidden');
+        });
+    })();
+    </script>
+    @endpush
 
 </x-layouts.dashboard>
