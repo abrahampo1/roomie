@@ -353,7 +353,13 @@
 
             <main class="col-span-12 lg:col-span-8">
                 @if ($creative = $campaign->creative)
-                    <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em] mb-5">Email</p>
+                    <div class="flex items-center justify-between mb-5">
+                        <p class="font-mono text-[11px] text-navy/40 uppercase tracking-[0.18em]">Email</p>
+                        <a href="{{ route('campaigns.editor', $campaign) }}" class="inline-flex items-center gap-1.5 bg-navy text-cream pl-4 pr-3 py-2 rounded-full text-xs font-medium hover:bg-navy-light transition">
+                            Abrir editor
+                            <svg class="w-3 h-3 text-copper" viewBox="0 0 24 24"><use href="#roomie-sparkle"/></svg>
+                        </a>
+                    </div>
 
                     <div class="bg-white border border-navy/15 rounded-2xl overflow-hidden">
                         <div class="px-5 sm:px-7 py-4 sm:py-5 border-b border-navy/10">

@@ -519,6 +519,69 @@ class CampaignPipeline
         return $this->client->complete($prompt, 'creative-refine');
     }
 
+    /**
+     * Refine a single block of the email using AI.
+     *
+     * Returns an array with updated block fields (content, items, etc.)
+     * that should be merged into the existing block.
+     *
+     * @return array<string, mixed>
+     */
+    public function refineBlock(Campaign $campaign, array $block, string $prompt): array
+    {
+        $this->aggressiveness = (int) ($campaign->aggressiveness ?? 2);
+        $this->persuasionPatterns = (int) ($campaign->persuasion_patterns ?? 2);
+
+        $strategy = $campaign->strategy ?? [];
+        $blockType = $block['type'] ?? 'text-body';
+        $blockJson = json_encode($block, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
+        $strategyBrief = json_encode([
+            'hotel' => $strategy['recommended_hotel']['name'] ?? '',
+            'city' => $strategy['recommended_hotel']['city'] ?? '',
+            'segment' => $strategy['target_segment']['name'] ?? '',
+            'tone' => $strategy['tone'] ?? '',
+            'key_message' => $strategy['key_message'] ?? '',
+        ], JSON_UNESCAPED_UNICODE);
+        $safePrompt = trim($prompt);
+
+        $typeRules = match ($blockType) {
+            'text-lead' => 'El lead usa Georgia 20px, color #1a1a2e. Debe ser memorable, concreto, máximo 2-3 frases. Devuelve solo el campo "content".',
+            'text-body' => 'El body usa Georgia 17px, color #1a1a2eb3. Párrafo editorial con detalles sensoriales concretos. Devuelve solo el campo "content".',
+            'pull-quote' => 'El pull-quote es una frase editorial memorable entre comillas, con borde copper. Devuelve solo el campo "content" (sin comillas, se añaden automáticamente).',
+            'highlight-list' => 'La lista tiene 3 items máximo, cada uno con un dash copper como prefijo. Devuelve un campo "items" como array de strings.',
+            'caption' => 'El caption es un label small-caps en Courier monospace. Devuelve solo el campo "content".',
+            'signoff' => 'La firma es un texto italic en Georgia 15px. Devuelve solo el campo "content".',
+            default => 'Devuelve los campos actualizados del bloque.',
+        };
+
+        $llmPrompt = <<<PROMPT
+        Eres el Agente Creativo de Roomie. Tienes que modificar UN SOLO bloque de un email de campaña.
+
+        CONTEXTO DE LA CAMPAÑA:
+        - Objetivo: {$campaign->objective}
+        - Estrategia: {$strategyBrief}
+
+        BLOQUE ACTUAL (tipo: {$blockType}):
+        {$blockJson}
+
+        INSTRUCCIÓN DEL USUARIO:
+        "{$safePrompt}"
+
+        REGLAS DEL TIPO DE BLOQUE:
+        {$typeRules}
+
+        REGLAS GENERALES:
+        - Aplica la instrucción literalmente al bloque.
+        - Mantén el mismo hotel, ciudad y tono a menos que el usuario pida cambiarlo.
+        - Usa solo la paleta: navy (#1a1a2e), copper (#c8956c), sand (#e2d1c3).
+        - Nombres propios reales, imágenes concretas, nada de clichés.
+
+        Responde SOLO con un JSON con los campos actualizados del bloque. Por ejemplo para text-body: {"content": "nuevo texto"}. Para highlight-list: {"items": ["item1", "item2", "item3"]}. Nada de markdown ni explicaciones.
+        PROMPT;
+
+        return $this->client->complete($llmPrompt, 'block-refine');
+    }
+
     private function buildBrandContext(Campaign $campaign): string
     {
         $brand = $campaign->user?->brandSetting;
