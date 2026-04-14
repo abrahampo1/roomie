@@ -11,6 +11,7 @@ use App\Services\Campaign\CampaignPipeline;
 use App\Services\LLM\LlmClientFactory;
 use App\Services\MarketIntelligence\MarketIntelligenceService;
 use App\Services\Webhooks\WebhookDispatcher;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -75,7 +76,7 @@ class CampaignController extends Controller
             ->with('message', 'Campaña en proceso. Los 4 agentes están trabajando...');
     }
 
-    public function refineCreative(Request $request, Campaign $campaign): RedirectResponse
+    public function refineCreative(Request $request, Campaign $campaign): RedirectResponse|JsonResponse
     {
         abort_unless($campaign->user_id === auth()->id(), 403);
         abort_unless($campaign->isComplete(), 422, 'El pipeline todavía no ha terminado.');
@@ -85,6 +86,10 @@ class CampaignController extends Controller
         ]);
 
         if ($campaign->getRawOriginal('api_key') === null) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'key_not_available', 'message' => 'La clave API ya se borró.'], 422);
+            }
+
             return redirect()
                 ->route('campaigns.show', $campaign)
                 ->with('message', 'La clave API de la campaña ya ha sido borrada. No se puede refinar.');
@@ -109,9 +114,17 @@ class CampaignController extends Controller
                 'instructions' => $validated['refinement_prompt'],
             ]);
         } catch (\Throwable $e) {
+            if ($request->wantsJson()) {
+                return response()->json(['error' => 'refine_failed', 'message' => $e->getMessage()], 500);
+            }
+
             return redirect()
                 ->route('campaigns.show', $campaign)
                 ->with('message', 'No se pudo refinar el creative: '.$e->getMessage());
+        }
+
+        if ($request->wantsJson()) {
+            return response()->json(['success' => true, 'creative' => $newCreative]);
         }
 
         return redirect()

@@ -5,6 +5,7 @@ use App\Http\Controllers\ApiTokenController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\BrandSettingsController;
 use App\Http\Controllers\CampaignController;
+use App\Http\Controllers\CampaignEditorController;
 use App\Http\Controllers\CampaignSendController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ImageBankController;
@@ -107,6 +108,16 @@ Route::middleware('auth')->group(function () {
 
     Route::post('campaigns/{campaign}/refine-creative', [CampaignController::class, 'refineCreative'])
         ->name('campaigns.refine-creative');
+
+    // Visual email editor
+    Route::get('campaigns/{campaign}/editor', [CampaignEditorController::class, 'edit'])
+        ->name('campaigns.editor');
+    Route::put('campaigns/{campaign}/editor', [CampaignEditorController::class, 'update'])
+        ->name('campaigns.editor.update');
+    Route::post('campaigns/{campaign}/editor/refine-block', [CampaignEditorController::class, 'refineBlock'])
+        ->name('campaigns.editor.refine-block');
+    Route::post('campaigns/{campaign}/editor/regenerate', [CampaignEditorController::class, 'regenerateAll'])
+        ->name('campaigns.editor.regenerate');
 
     Route::post('campaigns/{campaign}/send', [CampaignSendController::class, 'send'])
         ->name('campaigns.send');
